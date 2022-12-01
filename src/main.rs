@@ -49,7 +49,7 @@ impl Config {
 fn main() {
     let config = Config::build(env::args()).unwrap();
     let test_marker = match config.test {
-        true => "_test",
+        true => ".test",
         false => "",
     };
     let input_path = format!("inputs/{}.{}{}", config.year, config.day, test_marker);
