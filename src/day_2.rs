@@ -1,14 +1,32 @@
 pub fn main(contents: String) {
-    let mut total_score = 0;
+    let part_1_score = part_1(&contents);
+    println!("Part 1: {}", part_1_score);
 
+    let part_2_score = part_2(&contents);
+    println!("Part 2: {}", part_2_score);
+}
+
+fn part_1(contents: &String) -> i32 {
+    let mut part_1_score = 0;
     for line in contents.split("\n") {
         let (opponent_choice, your_choice) = match read_rps_line(line) {
             None => break,
             Some((c1, c2)) => (get_choice(c1), get_choice(c2)),
         };
-        total_score += calculate_score(&your_choice, rps_winner(&your_choice, &opponent_choice));
+
+        part_1_score += calculate_score(&your_choice, rps_winner(&your_choice, &opponent_choice));
     }
-    println!("Part 1: {}", total_score);
+    part_1_score
+}
+fn part_2(contents: &String) -> i32 {
+    let mut part_2_score = 0;
+    for line in contents.split("\n") {
+        let (opponent_choice, desired_result) = match read_rps_line(line) {
+            None => break,
+            Some((c1, c2)) => (get_choice(c1), get_result(c2)),
+        };
+    }
+    part_2_score
 }
 
 #[derive(PartialEq, Debug)]
@@ -18,11 +36,32 @@ enum RPS {
     Scissors,
 }
 
+#[derive(PartialEq, Debug)]
+enum GameResult {
+    Win,
+    Loss,
+    Draw,
+}
+
+fn get_result(key: char) -> GameResult {
+    match key {
+        'X' => GameResult::Loss,
+        'Y' => GameResult::Draw,
+        'Z' => GameResult::Win,
+        _ => panic!("Bad key!"),
+    }
+}
+
+// fn get_choice_by_result(opponent_choice: RPS, desired_result: GameResult) -> RPS {
+// match desired_result {
+// GameResult::Draw => opponent_choice,
+// GameResult::Loss => rps_winner(opponent_choice
+// }
+// }
 fn read_rps_line(line: &str) -> Option<(char, char)> {
     let mut chars = line.chars();
     let p1 = chars.next();
     if p1 == None {
-        // if p1 == '\n' {
         None
     } else {
         chars.next();
