@@ -56,5 +56,8 @@ fn main() {
     println!("{}", input_path);
 
     let contents = fs::read_to_string(input_path).unwrap();
-    day_1::main(contents)
+    match config.day {
+        1 => day_1::main(contents),
+        _ => panic!("Day not implemented!"),
+    }
 }
