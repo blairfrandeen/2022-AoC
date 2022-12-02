@@ -2,8 +2,9 @@ pub fn main(contents: String) {
     println!("Hello AoC!")
 }
 
+#[cfg(test)]
 mod tests {
-    // use super::*;
+    use super::*;
 
     #[test]
     fn test_42() {

@@ -38,6 +38,8 @@ fn content_to_ints(contents: String) -> Vec<i32> {
         }
     }
 }
+
+#[cfg(test)]
 mod tests {
     use super::*;
 

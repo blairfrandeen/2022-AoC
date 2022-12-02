@@ -28,7 +28,6 @@ fn part_2(contents: &String) -> i32 {
         };
         let your_choice = get_desired_outcome(&opponent_choice, &desired_result);
         part_2_score += calculate_score(&your_choice, desired_result);
-        // println!("Move should be {:?}", tmp_);
     }
     part_2_score
 }
@@ -123,6 +122,7 @@ fn calculate_score(choice: &RPS, result: GameResult) -> i32 {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 
