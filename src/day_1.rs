@@ -7,8 +7,7 @@ pub fn main(contents: String) {
     let mut current_elf = 0;
     let mut elf_cal_counts: Vec<i32> = Vec::new();
 
-    for line in contents.split('\n') {
-        let cal = line.parse::<i32>().unwrap_or_default();
+    for cal in content_to_ints(contents) {
         current_elf += cal;
         if cal == 0 {
             // assume no elves carrying zero calorie snacks.
@@ -25,12 +24,33 @@ pub fn main(contents: String) {
     println!("Part 2: {}", top_3);
 }
 
+fn content_to_ints(contents: String) -> Vec<i32> {
+    let parsed_string = contents
+        .split('\n')
+        .map(|s| s.parse::<i32>().unwrap_or_default())
+        .collect();
+    match &contents.ends_with("\n") {
+        false => parsed_string,
+        true => {
+            // last element will be zero (default). Ignore it.
+            let n = parsed_string.len() - 1;
+            parsed_string[..n].to_vec()
+        }
+    }
+}
 mod tests {
-    // use super::*;
+    use super::*;
 
     #[test]
-    fn test_42() {
-        let answer = 42;
-        assert_eq!(answer, 42)
+    fn test_content_to_int() {
+        // test with trailing newline
+        let content = String::from("1\n2\n3\n");
+        let ints = content_to_ints(content);
+        assert_eq!(ints, vec![1, 2, 3]);
+
+        // test without trailing newline
+        let content = String::from("1\n2\n3");
+        let ints = content_to_ints(content);
+        assert_eq!(ints, vec![1, 2, 3]);
     }
 }
