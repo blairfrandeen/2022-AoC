@@ -13,6 +13,9 @@ MOZILLA_COOKIE_PATH = glob.glob(
     "/mnt/c/Users/*/AppData/Roaming/Mozilla/Firefox/Profiles/*default-release/cookies.sqlite"
 )[0]
 
+TEMPLATE_SRC = os.path.join("src", "day_template.rs")
+MAIN_SRC = os.path.join("src", "main.rs")
+
 
 def get_session_cookie() -> str:
     """Get login cookie from firefox."""
@@ -38,6 +41,35 @@ def get_session_cookie() -> str:
     return f"{key}={value}"
 
 
+def copy_template(day: str) -> os.PathLike:
+    """Copy the template file as the next source file."""
+    target_file = os.path.join("src", f"day_{day}.rs")
+    if not os.path.exists(target_file):
+        copyfile(TEMPLATE_SRC, target_file)
+    return target_file
+
+
+def add_mod_to_main(day: str):
+    """Add the day to the match statement"""
+    new_match_arm = f"        {day} => day_{day}::main(contents),\n"
+    next_module = f"pub mod day_{day};\n"
+
+    with open(MAIN_SRC, "r") as main_src:
+        contents = main_src.readlines()
+
+    if new_match_arm in contents or next_module in contents:
+        return None
+
+    for index, line in enumerate(contents):
+        if line.strip() == "match config.day {":
+            contents.insert(index + 1, new_match_arm)
+            break
+
+    with open(MAIN_SRC, "w") as main_src:
+        main_src.write("".join(contents))
+        main_src.write(next_module)
+
+
 @click.command()
 @click.argument("year")
 @click.argument("day")
@@ -60,6 +92,8 @@ def get_input(year: str, day: str) -> os.PathLike:
                 f"Could not get puzzle input: {resp.status_code} {resp.reason}"
             )
 
+    copy_template(day)  # TODO: move to separate click function
+    add_mod_to_main(day)  # TODO: move to separate click function
     return file_path
 
 

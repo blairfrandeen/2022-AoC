@@ -6,9 +6,6 @@ Guidelines for adding a new day:
 - Add the module to the list below
 - Utility functions can be broken out later
 */
-pub mod day_1;
-// pub mod day_8;
-// pub mod day_9;
 
 use std::env;
 use std::fs;
@@ -61,3 +58,4 @@ fn main() {
         _ => panic!("Day not implemented!"),
     }
 }
+pub mod day_1;
