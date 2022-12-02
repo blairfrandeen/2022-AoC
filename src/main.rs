@@ -54,8 +54,10 @@ fn main() {
 
     let contents = fs::read_to_string(input_path).unwrap();
     match config.day {
+        2 => day_2::main(contents),
         1 => day_1::main(contents),
         _ => panic!("Day not implemented!"),
     }
 }
 pub mod day_1;
+pub mod day_2;
