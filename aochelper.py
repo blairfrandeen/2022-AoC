@@ -9,9 +9,15 @@ from shutil import copyfile
 import requests
 import click
 
-MOZILLA_COOKIE_PATH = glob.glob(
-    "/mnt/c/Users/*/AppData/Roaming/Mozilla/Firefox/Profiles/*default-release/cookies.sqlite"
-)[0]
+try:
+    MOZILLA_COOKIE_PATH = glob.glob(
+        "/mnt/c/Users/*/AppData/Roaming/Mozilla/Firefox/Profiles/*default-release/cookies.sqlite"
+    )[0]
+except IndexError:  # if nothing there, maybe we're on linux:
+    MOZILLA_COOKIE_PATH = glob.glob(
+        "/home/*/snap/firefox/common/.mozilla/firefox/*.default/cookies.sqlite"
+    )[0]
+
 
 TEMPLATE_SRC = os.path.join("src", "day_template.rs")
 MAIN_SRC = os.path.join("src", "main.rs")
@@ -29,7 +35,16 @@ def get_session_cookie() -> str:
     query = "SELECT name, value FROM moz_cookies WHERE host='.adventofcode.com'"
     cursor = db_connection.cursor()
     cursor.execute(query)
-    key, value = cursor.fetchone()
+    try:
+        key, value = cursor.fetchone()
+    except TypeError:
+        print("No matching cookie for advent of code found!")
+        print("Hint: You may have to restart your browser.")
+        # close the database, and delete the temporary file
+        # TODO: Make this into a context manager?
+        db_connection.close()
+        os.remove(local_db)
+        exit(-1)
 
     # close the database, and delete the temporary file
     db_connection.close()
@@ -78,7 +93,10 @@ def get_input(year: str, day: str) -> os.PathLike:
     input_url: str = puzzle_url + "/input"
     resp = requests.get(input_url, headers={"Cookie": get_session_cookie()})
 
+    if not os.path.exists("inputs"):
+        os.mkdir("inputs")
     file_path: os.PathLike = os.path.join("inputs", f"{year}.{day}")
+
     match resp.status_code:
         case 200:  # OK
             with open(file_path, "w") as fp:
