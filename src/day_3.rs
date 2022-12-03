@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 pub fn main(contents: String) {
     println!("Hello AoC!");
 /*    contents.split('\n').map(|word| {
@@ -8,18 +10,20 @@ pub fn main(contents: String) {
 }
 
 fn find_common(words: (&str, &str)) -> char {
-    let w1: Vec<char> = words.0.chars().collect();
-    let w2: Vec<char> = words.1.chars().collect();
+    let w1: HashSet<char> = words.0.chars().collect();
+    let w2: HashSet<char> = words.1.chars().collect();
     println!("{:?}", w1);
     println!("{:?}", w1[0]);
     if w1.len() != w2.len() {
         panic!("Words not the same length!")
     }
+    /*
     for index in [..w1.len()] {
         if w1[index] == w2[index] {
             return w1[index];
         }
     }
+    */
     unreachable!("No match found!")
 }
 
