@@ -2,29 +2,21 @@ use std::collections::HashSet;
 
 pub fn main(contents: String) {
     println!("Hello AoC!");
-/*    contents.split('\n').map(|word| {
-        let split = split_word(&word);
-
+    let mut sum: u32 = 0;
+    for line in contents.split('\n') {
+        if line.len() == 0 {
+            break
+        }
+        sum += get_priority(find_common(split_word(line))) as u32;
     }
-*/
+    println!("Part 1: {:?}", sum);
+
 }
 
 fn find_common(words: (&str, &str)) -> char {
     let w1: HashSet<char> = words.0.chars().collect();
     let w2: HashSet<char> = words.1.chars().collect();
-    println!("{:?}", w1);
-    println!("{:?}", w1[0]);
-    if w1.len() != w2.len() {
-        panic!("Words not the same length!")
-    }
-    /*
-    for index in [..w1.len()] {
-        if w1[index] == w2[index] {
-            return w1[index];
-        }
-    }
-    */
-    unreachable!("No match found!")
+    *w1.intersection(&w2).next().unwrap()
 }
 
 
@@ -48,6 +40,7 @@ mod tests {
     #[test]
     fn test_common() {
         assert_eq!(find_common(("big", "log")), 'g');
+        assert_eq!(find_common(("vJrwpWtwJgWr", "hcsFMMfFFhFp")), 'p');
     }
 
     #[test]
