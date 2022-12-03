@@ -29,7 +29,7 @@ fn content_to_ints(contents: String) -> Vec<i32> {
         .split('\n')
         .map(|s| s.parse::<i32>().unwrap_or_default())
         .collect();
-    match &contents.ends_with("\n") {
+    match &contents.ends_with('\n') {
         false => parsed_string,
         true => {
             // last element will be zero (default). Ignore it.

@@ -6,9 +6,9 @@ pub fn main(contents: String) {
     println!("Part 2: {}", part_2_score);
 }
 
-fn part_1(contents: &String) -> i32 {
+fn part_1(contents: &str) -> i32 {
     let mut part_1_score = 0;
-    for line in contents.split("\n") {
+    for line in contents.split('\n') {
         let (opponent_choice, your_choice) = match read_rps_line(line) {
             None => break,
             Some((c1, c2)) => (get_choice(c1), get_choice(c2)),
@@ -19,9 +19,9 @@ fn part_1(contents: &String) -> i32 {
     part_1_score
 }
 
-fn part_2(contents: &String) -> i32 {
+fn part_2(contents: &str) -> i32 {
     let mut part_2_score = 0;
-    for line in contents.split("\n") {
+    for line in contents.split('\n') {
         let (opponent_choice, desired_result) = match read_rps_line(line) {
             None => break,
             Some((c1, c2)) => (get_choice(c1), get_result(c2)),
@@ -68,12 +68,12 @@ fn get_result(key: char) -> GameResult {
 fn read_rps_line(line: &str) -> Option<(char, char)> {
     let mut chars = line.chars();
     let p1 = chars.next();
-    if p1 == None {
+    if p1.is_none() {
         None
     } else {
         chars.next();
         let p2 = chars.next();
-        if p2 == None {
+        if p2.is_none() {
             None
         } else {
             Some((p1.unwrap(), p2.unwrap()))
