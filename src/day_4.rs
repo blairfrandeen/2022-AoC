@@ -1,10 +1,3 @@
-/*
-Given sections in list form, i.e.
-14-89,17-25
-On each line
-
-Want to start with a parsing function that returns two tuples
-*/
 pub fn main(contents: String) {
     let part_1_ans = part_1(&contents);
     println!("Part 1: {part_1_ans}");
@@ -74,6 +67,7 @@ mod tests {
         assert!(!overlaps(vec![10, 20, 5, 6]));
         assert!(!overlaps(vec![5, 6, 10, 20]));
     }
+
     #[test]
     fn test_contains() {
         assert!(contains(vec![10, 20, 12, 18]));
