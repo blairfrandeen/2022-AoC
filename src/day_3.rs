@@ -2,27 +2,56 @@ use std::collections::HashSet;
 
 pub fn main(contents: String) {
     println!("Hello AoC!");
+    let part_1_total = part_1(&contents);
+    println!("Part 1: {:?}", part_1_total);
+    let part_2_total = part_2(&contents);
+    println!("Part 2: {:?}", part_2_total);
+
+}
+
+fn part_1(contents: &str) -> u32 {
     let mut sum: u32 = 0;
     for line in contents.split('\n') {
-        if line.len() == 0 {
+        if line.len() == 0 { // TODO: Make this work without having to check
             break
         }
         sum += get_priority(find_common(split_word(line))) as u32;
     }
-    println!("Part 1: {:?}", sum);
 
+    sum
 }
 
-fn find_common(words: (&str, &str)) -> char {
-    let w1: HashSet<char> = words.0.chars().collect();
-    let w2: HashSet<char> = words.1.chars().collect();
-    *w1.intersection(&w2).next().unwrap()
+fn part_2(contents: &str) -> u32 {
+    let mut sum: u32 = 0;
+    let mut lines = contents.split('\n');
+    loop {
+        match lines.next_chunk::<3>() {
+            Ok(c) => {
+                // println!("{:?}", c);
+                sum += get_priority(find_common(c.to_vec())) as u32;
+            },
+            Err(_) => break,
+        };
+    }
+
+    sum
+}
+fn find_common(words: Vec<&str>) -> char {
+    let mut sets: Vec<HashSet<char>> = words.iter().map(|w| w.chars().collect()).collect();
+    // println!("{:?}", sets);
+    let (intersection, others) = sets.split_at_mut(1);
+    let intersection = &mut intersection[0];
+    for other in others {
+        intersection.retain(|letter| other.contains(letter))
+    }
+    // println!("{:?}", intersection);
+    *intersection.iter().next().unwrap()
 }
 
 
-fn split_word(word: &str) -> (&str, &str) {
+fn split_word(word: &str) -> Vec<&str> {
     let half_len: usize = word.len() / 2;
-    (&word[0..half_len], &word[half_len..])
+    vec![&word[0..half_len], &word[half_len..]]
 }
 
 fn get_priority(item: char) -> usize {
@@ -39,8 +68,9 @@ mod tests {
 
     #[test]
     fn test_common() {
-        assert_eq!(find_common(("big", "log")), 'g');
-        assert_eq!(find_common(("vJrwpWtwJgWr", "hcsFMMfFFhFp")), 'p');
+        assert_eq!(find_common(vec![ "big", "log", "arg"]), 'g');
+        assert_eq!(find_common(vec![ "big", "log" ]), 'g');
+        assert_eq!(find_common(vec![ "vJrwpWtwJgWr", "hcsFMMfFFhFp" ]), 'p');
     }
 
     #[test]
@@ -53,7 +83,7 @@ mod tests {
 
     #[test]
     fn test_split() {
-        assert_eq!(("ki","vo"), split_word("kivo"));
-        assert_eq!(("vJrwpWtwJgWr", "hcsFMMfFFhFp"), split_word("vJrwpWtwJgWrhcsFMMfFFhFp"));
+        assert_eq!(vec![ "ki","vo" ], split_word("kivo"));
+        assert_eq!(vec![ "vJrwpWtwJgWr", "hcsFMMfFFhFp" ], split_word("vJrwpWtwJgWrhcsFMMfFFhFp"));
     }
 }

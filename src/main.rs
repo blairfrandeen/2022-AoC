@@ -7,6 +7,7 @@ Guidelines for adding a new day:
 - Utility functions can be broken out later
 */
 
+#![feature(iter_next_chunk)]
 use std::env;
 use std::fs;
 
