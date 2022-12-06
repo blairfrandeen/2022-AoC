@@ -67,6 +67,7 @@ fn main() {
     // let contents = read_input(&input_path);
     let contents = fs::read_to_string(&input_path).unwrap();
     match config.day {
+        5 => day_5::main(contents),
         4 => day_4::main(contents),
         3 => day_3::main(contents),
         2 => day_2::main(contents),
@@ -80,10 +81,11 @@ mod tests {
 
     #[test]
     fn test_read() {
-        assert_eq!(read_input("inputs/2022.1.test").len(), 14);
+        assert_eq!(_read_input("inputs/2022.1.test").len(), 14);
     }
 }
 pub mod day_1;
 pub mod day_2;
 pub mod day_3;
 pub mod day_4;
+pub mod day_5;
