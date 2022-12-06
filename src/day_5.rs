@@ -9,49 +9,59 @@ struct Instruction {
 }
 
 pub fn main(contents: String) {
+    let mut stack_cols_p1: Vec<Vec<char>> = initialize_stacks(&contents);
+    let mut stack_cols_p2 = stack_cols_p1.clone();
+    let mut instructions = contents.lines();
+    instructions.find(|&b| b == "");
+    for line in instructions {
+        // execute the moves as they come
+        stack_cols_p1 = execute_instruction(stack_cols_p1, parse_instruction(line), false);
+        stack_cols_p2 = execute_instruction(stack_cols_p2, parse_instruction(line), true);
+    }
+    let message_p1 = assemble_message(stack_cols_p1);
+    let message_p2 = assemble_message(stack_cols_p2);
+    println!("Part 1: {message_p1}");
+    println!("Part 2: {message_p2}");
+}
+
+fn initialize_stacks(contents: &str) -> Vec<Vec<char>> {
     let mut stack_rows: Vec<Vec<char>> = Vec::new();
     let mut stack_cols: Vec<Vec<char>> = Vec::new();
-    let mut stacks_collected: bool = false;
+    let num_stacks: u32;
 
-    let mut num_stacks: u32;
     for line in contents.lines() {
-        if stacks_collected {
-            // execute the moves as they come
-            stack_cols = execute_instruction(stack_cols, parse_instruction(line));
-        } else {
-            if line == "" {
-                // first blank line denotes end of stacks
-                stacks_collected = true;
-                num_stacks = stack_rows
-                    .pop() // last row is row of numbers
-                    .unwrap()
-                    .pop() // last element in the row
-                    .unwrap()
-                    .to_digit(10) // convert from char to digit
-                    .unwrap();
-                println!("We have {num_stacks} stacks!");
+        if line == "" {
+            // first blank line denotes end of stacks
+            num_stacks = stack_rows
+                .pop() // last row is row of numbers
+                .unwrap()
+                .pop() // last element in the row
+                .unwrap()
+                .to_digit(10) // convert from char to digit
+                .unwrap();
+            println!("We have {num_stacks} stacks!");
 
-                // Now we need to build the stacks
-                // start by making empty stacks
-                stack_cols = vec![vec![]; num_stacks as usize];
-                while let Some(mut row) = stack_rows.pop() {
-                    // start on the bottom row
-                    for index in 0..num_stacks {
-                        let next_box = row.pop().unwrap();
-                        match next_box {
-                            ' ' => continue, // blanks don't exist
-                            _ => stack_cols[index as usize].push(next_box),
-                        }
+            // Now we need to build the stacks
+            // start by making empty stacks
+            stack_cols = vec![vec![]; num_stacks as usize];
+            while let Some(mut row) = stack_rows.pop() {
+                // start on the bottom row
+                for index in 0..num_stacks {
+                    let next_box = row.pop().unwrap();
+                    match next_box {
+                        ' ' => continue, // blanks don't exist
+                        _ => stack_cols[index as usize].push(next_box),
                     }
                 }
-                stack_cols.reverse();
-                continue;
             }
+            stack_cols.reverse();
+            break;
+        } else {
+            // if we haven't reached the blank, keep adding to the rows
             stack_rows.push(parse_row(line));
         }
     }
-    let message = assemble_message(stack_cols);
-    println!("{:?}", message);
+    stack_cols
 }
 
 fn parse_instruction(inst: &str) -> Instruction {
@@ -80,18 +90,25 @@ fn parse_row(row_str: &str) -> Vec<char> {
     row_chars
 }
 
-fn execute_instruction(crates: Vec<Vec<char>>, inst: Instruction) -> Vec<Vec<char>> {
-    let mut crates = crates.clone();
-    let mut source_stack = crates[inst.from - 1].clone();
-    let mut target_stack = crates[inst.to - 1].clone();
-    for _ in 1..=inst.qty {
-        // assume no empty stacks
-        // want to panic on empty stack
-        target_stack.push(source_stack.pop().unwrap())
+fn execute_instruction(
+    stack_cols: Vec<Vec<char>>,
+    inst: Instruction,
+    part_2: bool,
+) -> Vec<Vec<char>> {
+    let mut stack_cols = stack_cols.clone();
+    let mut source_stack = stack_cols[inst.from - 1].clone();
+    let mut target_stack = stack_cols[inst.to - 1].clone();
+    let mut moved_stack = source_stack.split_off(source_stack.len() - inst.qty);
+
+    if !part_2 {
+        moved_stack.reverse()
     }
-    crates[inst.from - 1] = source_stack;
-    crates[inst.to - 1] = target_stack;
-    crates
+    // println!("{:?}", source_stack);
+    target_stack.append(&mut moved_stack);
+
+    stack_cols[inst.from - 1] = source_stack;
+    stack_cols[inst.to - 1] = target_stack;
+    stack_cols
 }
 
 fn assemble_message(crates: Vec<Vec<char>>) -> String {
@@ -141,7 +158,11 @@ mod tests {
     fn test_execute() {
         let stacks = sample_crates();
         assert_eq!(
-            execute_instruction(stacks, sample_instruction()),
+            execute_instruction(stacks.clone(), sample_instruction(), false),
+            vec![vec!['Z', 'N', 'D'], vec!['M', 'C'], vec!['P']]
+        );
+        assert_eq!(
+            execute_instruction(stacks.clone(), sample_instruction(), true),
             vec![vec!['Z', 'N', 'D'], vec!['M', 'C'], vec!['P']]
         );
         let inst = Instruction {
@@ -151,7 +172,7 @@ mod tests {
         };
         let stacks = vec![vec!['Z', 'N', 'D'], vec!['M', 'C'], vec!['P']];
         assert_eq!(
-            execute_instruction(stacks, inst),
+            execute_instruction(stacks.clone(), inst, false),
             vec![vec![], vec!['M', 'C'], vec!['P', 'D', 'N', 'Z']]
         );
     }
