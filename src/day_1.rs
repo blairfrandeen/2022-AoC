@@ -21,7 +21,7 @@ pub fn main(contents: String) {
     let top_3: i32 = elf_cal_counts[0..3].iter().sum();
 
     println!("Part 1: {:?}", elf_cal_counts[0]);
-    println!("Part 2: {}", top_3);
+    println!("Part 2: {top_3}");
 }
 
 fn content_to_ints(contents: String) -> Vec<i32> {

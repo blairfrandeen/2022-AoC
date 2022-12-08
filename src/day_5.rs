@@ -12,7 +12,7 @@ pub fn main(contents: String) {
     let mut stack_cols_p1: Vec<Vec<char>> = initialize_stacks(&contents);
     let mut stack_cols_p2 = stack_cols_p1.clone();
     let mut instructions = contents.lines();
-    instructions.find(|&b| b == "");
+    instructions.find(|&b| b.is_empty());
     for line in instructions {
         // execute the moves as they come
         stack_cols_p1 = execute_instruction(stack_cols_p1, parse_instruction(line), false);
@@ -30,7 +30,7 @@ fn initialize_stacks(contents: &str) -> Vec<Vec<char>> {
     let num_stacks: u32;
 
     for line in contents.lines() {
-        if line == "" {
+        if line.is_empty() {
             // first blank line denotes end of stacks
             num_stacks = stack_rows
                 .pop() // last row is row of numbers
@@ -85,17 +85,17 @@ fn parse_row(row_str: &str) -> Vec<char> {
     let mut row_chars: Vec<char> = row_str.chars().collect();
     row_chars.retain(|_| {
         ind += 1;
-        return ind % 4 == 1;
+        ind % 4 == 1
     });
     row_chars
 }
 
 fn execute_instruction(
-    stack_cols: Vec<Vec<char>>,
+    mut stack_cols: Vec<Vec<char>>,
     inst: Instruction,
     part_2: bool,
 ) -> Vec<Vec<char>> {
-    let mut stack_cols = stack_cols.clone();
+    // let mut stack_cols = stack_cols.clone();
     let mut source_stack = stack_cols[inst.from - 1].clone();
     let mut target_stack = stack_cols[inst.to - 1].clone();
     let mut moved_stack = source_stack.split_off(source_stack.len() - inst.qty);
@@ -111,9 +111,8 @@ fn execute_instruction(
     stack_cols
 }
 
-fn assemble_message(crates: Vec<Vec<char>>) -> String {
+fn assemble_message(mut crates: Vec<Vec<char>>) -> String {
     let mut message = String::new();
-    let mut crates = crates.clone();
     for stack in crates.iter_mut() {
         // Unlikely that we will have any empty stacks
         // If we do, assume it's a space in the message

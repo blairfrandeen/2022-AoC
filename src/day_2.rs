@@ -1,9 +1,9 @@
 pub fn main(contents: String) {
     let part_1_score = part_1(&contents);
-    println!("Part 1: {}", part_1_score);
+    println!("Part 1: {part_1_score}");
 
     let part_2_score = part_2(&contents);
-    println!("Part 2: {}", part_2_score);
+    println!("Part 2: {part_2_score}");
 }
 
 fn part_1(contents: &str) -> i32 {

@@ -3,8 +3,8 @@
 use std::collections::HashSet;
 
 pub fn main(contents: String) {
-    println!("Part 1: {}", find_marker(&contents, 4 as usize));
-    println!("Part 2: {}", find_marker(&contents, 14 as usize));
+    println!("Part 1: {}", find_marker(&contents, 4));
+    println!("Part 2: {}", find_marker(&contents, 14));
 }
 
 fn find_marker(signal: &str, marker_size: usize) -> usize {
@@ -45,14 +45,14 @@ mod tests {
     #[test]
     fn test_examples() {
         for example in test_cases_p1() {
-            assert_eq!(find_marker(example.0, 4 as usize), example.1);
+            assert_eq!(find_marker(example.0, 4), example.1);
         }
     }
 
     #[test]
     fn test_p2() {
         for example in test_cases_p2() {
-            assert_eq!(find_marker(example.0, 14 as usize), example.1);
+            assert_eq!(find_marker(example.0, 14), example.1);
         }
     }
 }

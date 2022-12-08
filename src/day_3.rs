@@ -2,9 +2,9 @@ use std::collections::HashSet;
 
 pub fn main(contents: String) {
     let part_1_total = part_1(&contents);
-    println!("Part 1: {}", part_1_total);
+    println!("Part 1: {part_1_total}");
     let part_2_total = part_2(&contents);
-    println!("Part 2: {}", part_2_total);
+    println!("Part 2: {part_2_total}");
 }
 
 fn part_1(contents: &str) -> u32 {
