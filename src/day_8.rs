@@ -3,16 +3,21 @@ AoC 2022 Day 8
 How best to represent a grid in Rust?
 */
 
-use std::fs;
 pub fn main(contents: String) {
-    let grid_p1 = parse_input(contents);
+    let grid = parse_input(contents);
     let mut num_visible: u32 = 0;
-    for index in 0..grid_p1.num_rows * grid_p1.num_cols {
-        if is_visible(&grid_p1, index) {
+    let mut max_scenic_score: u32 = 0;
+    for index in 0..grid.num_rows * grid.num_cols {
+        let tree_scenic_score = scenic_score(&grid, index);
+        if tree_scenic_score > max_scenic_score {
+            max_scenic_score = tree_scenic_score;
+        }
+        if is_visible(&grid, index) {
             num_visible += 1;
         }
     }
     println!("Part 1: {num_visible}");
+    println!("Part 2: {max_scenic_score}");
 }
 
 #[derive(PartialEq, Debug)]
@@ -33,6 +38,45 @@ impl Grid {
         let col: usize = &index % &self.num_cols;
         (row, col)
     }
+}
+
+fn scenic_score(grid: &Grid, index: usize) -> u32 {
+    let height: &u8 = &grid.data[index];
+    let (row, col) = grid.loc(index);
+
+    let mut n_row_before = 0; // LEFT
+    for c in 1..=col {
+        n_row_before += 1;
+        if grid.get(row, col - c) >= *height {
+            break;
+        }
+    }
+    let mut n_row_after = 0; // RIGHT
+    for c in col + 1..grid.num_cols {
+        n_row_after += 1;
+        if grid.get(row, c) >= *height {
+            break;
+        }
+    }
+    let mut n_col_before = 0; // UP
+    for r in 1..=row {
+        n_col_before += 1;
+        if grid.get(row - r, col) >= *height {
+            break;
+        }
+    }
+    let mut n_col_after = 0; // DOWN
+    for r in row + 1..grid.num_rows {
+        n_col_after += 1;
+        if grid.get(r, col) >= *height {
+            break;
+        }
+    }
+    // println!("LEFT: {n_row_before}"); //1
+    // println!("RIGHT: {n_row_after}"); //2
+    // println!("UP: {n_col_before}"); // 1
+    // println!("DOWN: {n_col_after}"); // 2
+    n_row_before * n_row_after * n_col_before * n_col_after
 }
 
 fn is_visible(grid: &Grid, index: usize) -> bool {
@@ -97,6 +141,7 @@ fn parse_input(contents: String) -> Grid {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
 
     fn mock_grid() -> Grid {
         Grid {
@@ -118,6 +163,13 @@ mod tests {
         assert!(!is_visible(&test_grid, 16));
         assert!(is_visible(&test_grid, 17));
         assert!(!is_visible(&test_grid, 18));
+    }
+    #[test]
+    fn test_scenic() {
+        let test_contents = fs::read_to_string("inputs/2022.8.test").unwrap();
+        let test_grid = parse_input(test_contents);
+        assert_eq!(scenic_score(&test_grid, 7), 4);
+        assert_eq!(scenic_score(&test_grid, 17), 8);
     }
 
     #[test]

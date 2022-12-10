@@ -67,6 +67,7 @@ fn main() {
     // let contents = read_input(&input_path);
     let contents = fs::read_to_string(&input_path).unwrap();
     match config.day {
+        8 => day_8::main(contents),
         7 => day_7::main(contents),
         6 => day_6::main(contents),
         5 => day_5::main(contents),
@@ -93,3 +94,4 @@ pub mod day_4;
 pub mod day_5;
 pub mod day_6;
 pub mod day_7;
+pub mod day_8;
