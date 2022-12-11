@@ -1,21 +1,12 @@
-/*
-AoC 2022 Day 8
-How best to represent a grid in Rust?
-*/
-
 pub fn main(contents: String) {
-    let grid = parse_input(contents);
-    let mut num_visible: u32 = 0;
-    let mut max_scenic_score: u32 = 0;
-    for index in 0..grid.num_rows * grid.num_cols {
-        let tree_scenic_score = scenic_score(&grid, index);
-        if tree_scenic_score > max_scenic_score {
-            max_scenic_score = tree_scenic_score;
-        }
-        if is_visible(&grid, index) {
-            num_visible += 1;
-        }
-    }
+    let grid = Grid::build(contents);
+    let num_visible: u32 = (0..grid.data.len())
+        .map(|x| is_visible(&grid, x) as u32)
+        .sum();
+    let max_scenic_score: u32 = (0..grid.data.len())
+        .map(|x| scenic_score(&grid, x))
+        .reduce(|max, item| if max >= item { max } else { item })
+        .unwrap();
     println!("Part 1: {num_visible}");
     println!("Part 2: {max_scenic_score}");
 }
@@ -37,6 +28,29 @@ impl Grid {
         let row: usize = &index / &self.num_cols;
         let col: usize = &index % &self.num_cols;
         (row, col)
+    }
+
+    fn build(contents: String) -> Grid {
+        let mut data: Vec<u8> = Vec::new();
+        let mut num_rows: usize = 0;
+        let mut num_cols: usize = 0;
+        for line in contents.lines() {
+            let mut l: Vec<u8> = line
+                .chars()
+                .map(|c| c.to_digit(10).unwrap() as u8)
+                .collect();
+            if num_cols != 0 && line.len() != num_cols {
+                panic!("Unequal number of columns in input!")
+            }
+            num_cols = line.len();
+            data.append(&mut l);
+            num_rows += 1;
+        }
+        Grid {
+            num_rows,
+            num_cols,
+            data,
+        }
     }
 }
 
@@ -115,29 +129,6 @@ fn is_visible(grid: &Grid, index: usize) -> bool {
     row_before || row_after || col_before || col_after
 }
 
-fn parse_input(contents: String) -> Grid {
-    let mut grid: Vec<u8> = Vec::new();
-    let mut num_rows: usize = 0;
-    let mut num_cols: usize = 0;
-    for line in contents.lines() {
-        let mut l: Vec<u8> = line
-            .chars()
-            .map(|c| c.to_digit(10).unwrap() as u8)
-            .collect();
-        if num_cols != 0 && line.len() != num_cols {
-            panic!("Unequal number of columns in input!")
-        }
-        num_cols = line.len();
-        grid.append(&mut l);
-        num_rows += 1;
-    }
-    Grid {
-        num_rows,
-        num_cols,
-        data: grid,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -157,7 +148,7 @@ mod tests {
             assert!(is_visible(&mock_grid(), n));
         }
         let test_contents = fs::read_to_string("inputs/2022.8.test").unwrap();
-        let test_grid = parse_input(test_contents);
+        let test_grid = Grid::build(test_contents);
         assert!(is_visible(&test_grid, 6));
         assert!(!is_visible(&test_grid, 12));
         assert!(!is_visible(&test_grid, 16));
@@ -167,7 +158,7 @@ mod tests {
     #[test]
     fn test_scenic() {
         let test_contents = fs::read_to_string("inputs/2022.8.test").unwrap();
-        let test_grid = parse_input(test_contents);
+        let test_grid = Grid::build(test_contents);
         assert_eq!(scenic_score(&test_grid, 7), 4);
         assert_eq!(scenic_score(&test_grid, 17), 8);
     }
@@ -188,9 +179,9 @@ mod tests {
     }
 
     #[test]
-    fn test_parse() {
+    fn test_grid() {
         let test_input = String::from("12345\n67890\n");
         let test_grid = mock_grid();
-        assert_eq!(parse_input(test_input), test_grid);
+        assert_eq!(Grid::build(test_input), test_grid);
     }
 }
