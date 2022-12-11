@@ -25,8 +25,8 @@ impl Grid {
     }
 
     fn loc(&self, index: usize) -> (usize, usize) {
-        let row: usize = &index / &self.num_cols;
-        let col: usize = &index % &self.num_cols;
+        let row: usize = index / self.num_cols;
+        let col: usize = index % self.num_cols;
         (row, col)
     }
 
