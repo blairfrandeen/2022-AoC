@@ -14,7 +14,7 @@ use std::fs;
 struct Config {
     year: i32,
     day: i32,
-    test: bool,
+    test: Option<String>,
 }
 
 impl Config {
@@ -35,8 +35,7 @@ impl Config {
             None => return Err("No day specified"),
         };
 
-        // TODO: make this actually check something
-        let test = args.next().is_some();
+        let test = args.next();
 
         Ok(Config { year, day, test })
     }
@@ -58,8 +57,8 @@ fn _read_input(file_path: &str) -> Vec<String> {
 fn main() {
     let config = Config::build(env::args()).unwrap();
     let test_marker = match config.test {
-        true => ".test",
-        false => "",
+        Some(t) => format!(".{}", t),
+        None => "".to_string(),
     };
     let input_path = format!("inputs/{}.{}{}", config.year, config.day, test_marker);
     println!("{input_path}");
