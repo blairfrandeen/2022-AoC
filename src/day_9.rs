@@ -20,7 +20,7 @@ impl Position {
 
     fn follow(&mut self, other: &Position) {
         if touching(self, other) {
-            return ();
+            return;
         }
         // self and other are in same row or column
         if self.x == other.x || self.y == other.y {
