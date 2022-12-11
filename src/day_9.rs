@@ -19,7 +19,7 @@ impl Position {
     }
 
     fn follow(&mut self, other: &Position) {
-        if touching(self, &other) {
+        if touching(self, other) {
             return ();
         }
         // self and other are in same row or column
@@ -67,22 +67,45 @@ fn parse_instruction(input: &str) -> (char, u32) {
     (dir, num)
 }
 
+struct Rope {
+    positions: Vec<Position>,
+    length: usize,
+}
+
+impl Rope {
+    fn build(length: usize) -> Rope {
+        if length < 2 {
+            panic!("Your rope is too short lol");
+        }
+        let mut positions = Vec::<Position>::new();
+        for index in 0..length {
+            let mut new_pos = Position { x: 0, y: 0 };
+            positions.push(new_pos);
+        }
+        Rope { positions, length }
+    }
+}
+
 pub fn main(contents: String) {
-    let mut head = Position { x: 0, y: 0 };
-    let mut tail = Position { x: 0, y: 0 };
-    let mut tail_history: HashSet<Position> = HashSet::new();
-    tail_history.insert(tail.clone());
+    let mut rope = Rope::build(10);
+    let mut part_1: HashSet<Position> = HashSet::new();
+    let mut part_2: HashSet<Position> = HashSet::new();
     for line in contents.lines() {
         // println!("{}", &line);
         let (dir, num) = parse_instruction(line);
         for _ in 0..num {
-            head.lead(dir);
-            tail.follow(&head);
+            rope.positions[0].lead(dir);
+            for p in 1..rope.length {
+                let next_knot = rope.positions[p - 1].clone();
+                rope.positions[p].follow(&next_knot);
+            }
             // println!("{:?} {:?}", &head, &tail);
-            tail_history.insert(tail.clone());
+            part_1.insert(rope.positions[1].clone());
+            part_2.insert(rope.positions[9].clone());
         }
     }
-    println!("Part 1: {}", tail_history.len())
+    println!("Part 1: {}", part_1.len());
+    println!("Part 2: {}", part_2.len());
 }
 
 #[cfg(test)]
