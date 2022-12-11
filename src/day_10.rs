@@ -1,3 +1,7 @@
+const OFF: char = '🎄';
+const ON: char = '🎅';
+const LINE_LEN: usize = 40;
+
 pub fn main(contents: String) {
     let target_cycles = vec![19, 59, 99, 139, 179, 219];
     let cycles = process_signal(contents);
@@ -5,7 +9,20 @@ pub fn main(contents: String) {
         .iter()
         .map(|index| signal_strength(&cycles, *index))
         .sum();
-    println!("Part 1: {part_1}")
+    println!("Part 1: {part_1}");
+    for i in 0..cycles.len() - 1 {
+        if i % LINE_LEN == 0 {
+            println!();
+        }
+        match render_pixel(&cycles, i) {
+            true => print!("{ON}"),
+            false => print!("{OFF}"),
+        }
+    }
+}
+fn render_pixel(cycles: &[i32], index: usize) -> bool {
+    let row_index: usize = index % LINE_LEN;
+    (cycles[index] - row_index as i32).abs() <= 1
 }
 
 fn parse_input(input: &str) -> Option<i32> {
@@ -42,6 +59,18 @@ mod tests {
         assert_eq!(parse_input("noop\n"), None);
         assert_eq!(parse_input("addx 3\n"), Some(3));
         assert_eq!(parse_input("addx -13\n"), Some(-13));
+    }
+
+    #[test]
+    fn test_render() {
+        let cycles = process_signal(fs::read_to_string("inputs/2022.10.test").unwrap());
+        // lines are 40 chars long
+        assert!(render_pixel(&cycles, 0));
+        assert!(!render_pixel(&cycles, 2));
+        assert!(!render_pixel(&cycles, 6));
+        assert!(render_pixel(&cycles, 12));
+        assert!(render_pixel(&cycles, 40));
+        assert!(!render_pixel(&cycles, 43));
     }
 
     #[test]
