@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 pub fn main(contents: String) {
     let mut monkeys = parse_monkeys(contents);
-    for _ in 0..20 {
+    for _ in 0..10000 {
         take_turn(&mut monkeys);
     }
     let mb = monkey_business(&monkeys);
@@ -10,27 +10,33 @@ pub fn main(contents: String) {
 }
 
 struct Monkey {
-    items: Vec<u128>,
-    operation: Box<dyn Fn(u128) -> u128>,
+    items: Vec<u64>,
+    operation: Box<dyn Fn(u64) -> u64>,
     test: u32,
     test_true: usize,
     test_false: usize,
-    num_inspections: u128,
+    num_inspections: u64,
 }
 
 fn take_turn(monkeys: &mut HashMap<usize, Monkey>) {
+    let monkey_test_mod: u32 = monkeys
+        .iter()
+        .map(|(_, m)| m.test)
+        .reduce(|accum, item| accum * item)
+        .unwrap();
     for monkey_index in 0..monkeys.len() {
         let mut current_monkey = monkeys.get_mut(&monkey_index).unwrap();
-        let mut thrown_true: Vec<u128> = Vec::new();
-        let mut thrown_false: Vec<u128> = Vec::new();
+        let mut thrown_true: Vec<u64> = Vec::new();
+        let mut thrown_false: Vec<u64> = Vec::new();
         let true_index = current_monkey.test_true;
         let false_index = current_monkey.test_false;
         while let Some(mut item) = current_monkey.items.pop() {
             current_monkey.num_inspections += 1; // inspect item
-                                                 // item = item % current_monkey.test as u128;
+                                                 // item = item % current_monkey.test as u64;
             item = (current_monkey.operation)(item.into());
-            item /= 3; // decrease worry
-            match item % current_monkey.test as u128 {
+            // item /= 3; // decrease worry
+            item %= monkey_test_mod as u64; // decrease worry
+            match item % current_monkey.test as u64 {
                 0 => thrown_true.push(item),
                 _ => thrown_false.push(item),
             };
@@ -48,11 +54,11 @@ fn take_turn(monkeys: &mut HashMap<usize, Monkey>) {
     }
 }
 
-fn monkey_business(monkeys: &HashMap<usize, Monkey>) -> u128 {
-    let mut inspections: Vec<u128> = monkeys.iter().map(|(_, m)| m.num_inspections).collect();
+fn monkey_business(monkeys: &HashMap<usize, Monkey>) -> u64 {
+    let mut inspections: Vec<u64> = monkeys.iter().map(|(_, m)| m.num_inspections).collect();
     inspections.sort();
     inspections.reverse();
-    inspections[0] as u128 * inspections[1] as u128
+    inspections[0] as u64 * inspections[1] as u64
 }
 
 fn parse_monkeys(input: String) -> HashMap<usize, Monkey> {
@@ -88,25 +94,25 @@ fn parse_monkeys(input: String) -> HashMap<usize, Monkey> {
     monkeys
 }
 
-fn parse_items(line: &str) -> Vec<u128> {
-    let mut items: Vec<u128> = Vec::new();
+fn parse_items(line: &str) -> Vec<u64> {
+    let mut items: Vec<u64> = Vec::new();
     let line_items: Vec<&str> = line
         .trim()
         .split(|c| c == ',' || c == ':' || c == ' ')
         .collect();
     for item in line_items {
-        if let Ok(new_item) = item.parse::<u128>() {
+        if let Ok(new_item) = item.parse::<u64>() {
             items.push(new_item);
         }
     }
     items
 }
 
-fn parse_operation(op: &str) -> Box<dyn Fn(u128) -> u128> {
+fn parse_operation(op: &str) -> Box<dyn Fn(u64) -> u64> {
     let mut line_items: Vec<&str> = op.trim().split_whitespace().collect();
     let constant = match line_items.pop().unwrap() {
         "old" => return Box::new(|x| x * x),
-        num => num.parse::<u128>().unwrap(),
+        num => num.parse::<u64>().unwrap(),
     };
     match line_items.pop().unwrap() {
         "*" => Box::new(move |x| x * constant),
