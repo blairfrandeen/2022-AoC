@@ -10,32 +10,30 @@ pub fn main(contents: String) {
 }
 
 struct Monkey {
-    items: Vec<u32>,
-    operation: Box<dyn Fn(u32) -> u32>,
+    items: Vec<u128>,
+    operation: Box<dyn Fn(u128) -> u128>,
     test: u32,
     test_true: usize,
     test_false: usize,
-    num_inspections: u32,
+    num_inspections: u128,
 }
 
 fn take_turn(monkeys: &mut HashMap<usize, Monkey>) {
     for monkey_index in 0..monkeys.len() {
         let mut current_monkey = monkeys.get_mut(&monkey_index).unwrap();
-        let mut thrown_true: Vec<u32> = Vec::new();
-        let mut thrown_false: Vec<u32> = Vec::new();
+        let mut thrown_true: Vec<u128> = Vec::new();
+        let mut thrown_false: Vec<u128> = Vec::new();
         let true_index = current_monkey.test_true;
         let false_index = current_monkey.test_false;
         while let Some(mut item) = current_monkey.items.pop() {
             current_monkey.num_inspections += 1; // inspect item
-            item = (current_monkey.operation)(item); // increase worry
+                                                 // item = item % current_monkey.test as u128;
+            item = (current_monkey.operation)(item.into());
             item /= 3; // decrease worry
-                       // find target
-            match item % current_monkey.test {
+            match item % current_monkey.test as u128 {
                 0 => thrown_true.push(item),
                 _ => thrown_false.push(item),
             };
-            // let target_monkey = monkeys.get_mut(&target_index).unwrap();
-            // thrown_items.push(item);
         }
         thrown_true.reverse();
         thrown_false.reverse();
@@ -48,16 +46,13 @@ fn take_turn(monkeys: &mut HashMap<usize, Monkey>) {
             target_false.items.push(item);
         }
     }
-    // monkeys.get_mut(&1).unwrap().test = 94;
-    // let tmp_item = monkeys.get_mut(&1).unwrap().items.pop().unwrap();
-    // monkeys.get_mut(&0).unwrap().items.push(tmp_item);
 }
 
-fn monkey_business(monkeys: &HashMap<usize, Monkey>) -> u32 {
-    let mut inspections: Vec<u32> = monkeys.iter().map(|(_, m)| m.num_inspections).collect();
+fn monkey_business(monkeys: &HashMap<usize, Monkey>) -> u128 {
+    let mut inspections: Vec<u128> = monkeys.iter().map(|(_, m)| m.num_inspections).collect();
     inspections.sort();
     inspections.reverse();
-    inspections[0] * inspections[1]
+    inspections[0] as u128 * inspections[1] as u128
 }
 
 fn parse_monkeys(input: String) -> HashMap<usize, Monkey> {
@@ -65,7 +60,6 @@ fn parse_monkeys(input: String) -> HashMap<usize, Monkey> {
     let mut index: usize = 0;
     let mut input_stream = input.lines();
     loop {
-        // input_stream.next();
         if input_stream.next().is_none() {
             break;
         }
@@ -90,30 +84,29 @@ fn parse_monkeys(input: String) -> HashMap<usize, Monkey> {
             break;
         }
     }
-    // println!("{:?}", &monkeys);
 
     monkeys
 }
 
-fn parse_items(line: &str) -> Vec<u32> {
-    let mut items: Vec<u32> = Vec::new();
+fn parse_items(line: &str) -> Vec<u128> {
+    let mut items: Vec<u128> = Vec::new();
     let line_items: Vec<&str> = line
         .trim()
         .split(|c| c == ',' || c == ':' || c == ' ')
         .collect();
     for item in line_items {
-        if let Ok(new_item) = item.parse::<u32>() {
+        if let Ok(new_item) = item.parse::<u128>() {
             items.push(new_item);
         }
     }
     items
 }
 
-fn parse_operation(op: &str) -> Box<dyn Fn(u32) -> u32> {
+fn parse_operation(op: &str) -> Box<dyn Fn(u128) -> u128> {
     let mut line_items: Vec<&str> = op.trim().split_whitespace().collect();
     let constant = match line_items.pop().unwrap() {
         "old" => return Box::new(|x| x * x),
-        num => num.parse::<u32>().unwrap(),
+        num => num.parse::<u128>().unwrap(),
     };
     match line_items.pop().unwrap() {
         "*" => Box::new(move |x| x * constant),
@@ -134,6 +127,7 @@ fn parse_last(line: &str) -> u32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use indoc::indoc;
 
     #[test]
     fn test_business() {
@@ -173,22 +167,22 @@ mod tests {
     }
 
     fn mock_monkeys() -> String {
-        let monkeys = String::from(
-            "Monkey 0:
-  Starting items: 89, 73, 66, 57, 64, 80
-  Operation: new = old * 3
-  Test: divisible by 13
-    If true: throw to monkey 6
-    If false: throw to monkey 2
+        let monkeys = indoc! {"
+        Monkey 0:
+          Starting items: 89, 73, 66, 57, 64, 80
+          Operation: new = old * 3
+          Test: divisible by 13
+            If true: throw to monkey 6
+            If false: throw to monkey 2
 
-Monkey 1:
-  Starting items: 83, 78, 81, 55, 81, 59, 69
-  Operation: new = old + 1
-  Test: divisible by 3
-    If true: throw to monkey 7
-    If false: throw to monkey 4
-    ",
-        );
+        Monkey 1:
+          Starting items: 83, 78, 81, 55, 81, 59, 69
+          Operation: new = old + 1
+          Test: divisible by 3
+            If true: throw to monkey 7
+            If false: throw to monkey 4
+            "}
+        .to_string();
         monkeys
     }
 }
