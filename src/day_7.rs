@@ -17,27 +17,55 @@ which means I'd regret not grabbing the information to begin with.
 This seems like a good use of both the nom crate and the Rc<T> structure.
 */
 
-use nom::{bytes::complete::tag, IResult};
+// use nom::{bytes::complete::tag, IResult};
+use std::collections::HashMap;
+
 pub fn main(contents: String) {
+    let mut cwd = String::new(); //from("/"); // first line of input is home dir
+    let mut directory_structure: HashMap<String, u32> = HashMap::new();
+    let mut cwd_size: u32 = 0;
     for line in contents.lines() {
-        parse_line(&line);
+        let line_items: Vec<&str> = line.split_whitespace().collect();
+        match line_items[0].parse::<u32>() {
+            Ok(size) => cwd_size += size,
+            Err(_) => {
+                if line_items.len() > 2 {
+                    // change directory command
+                    let key = cwd.clone();
+                    directory_structure.insert(key, cwd_size);
+                    // reset size counter
+                    cwd_size = 0;
+                    // get the directory we're in
+                    println!("Dir is {}", line_items[2]);
+                    cwd = cd(line_items[2], &cwd);
+                }
+            }
+        }
+    }
+    let key = cwd.clone();
+    directory_structure.insert(key, cwd_size);
+    println!("{:?}", directory_structure);
+}
+
+fn cd<'a>(dir: &'a str, cwd: &'a str) -> String {
+    let mut tree: Vec<&str> = cwd.split('/').collect();
+    tree.pop();
+    if dir == ".." {
+        tree.pop();
+        tree.join("/")
+    } else {
+        tree.pop();
+        tree.push(dir);
+        format!("{}/", tree.join("/"))
     }
 }
-
-fn parse_line(line: &str) -> IResult<&str, &str> {
-    let (cmd, _) = tag("$ ")(line)?;
-    println!("{} {}", line, cmd);
-
-    Ok((line, "success"))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_42() {
-        let answer = 42;
-        assert_eq!(answer, 42)
+    fn test_cd() {
+        assert_eq!(cd("lol", "/"), "/lol/");
+        assert_eq!(cd("..", "/lol/"), "/");
     }
 }
