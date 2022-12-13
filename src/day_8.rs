@@ -1,3 +1,5 @@
+use crate::common::Grid;
+
 pub fn main(contents: String) {
     let grid = Grid::build(contents);
     let num_visible: u32 = (0..grid.data.len())
@@ -9,49 +11,6 @@ pub fn main(contents: String) {
         .unwrap();
     println!("Part 1: {num_visible}");
     println!("Part 2: {max_scenic_score}");
-}
-
-#[derive(PartialEq, Debug)]
-struct Grid {
-    num_rows: usize,
-    num_cols: usize,
-    data: Vec<u8>,
-}
-
-impl Grid {
-    fn get(&self, row: usize, col: usize) -> u8 {
-        let value: &u8 = &self.data[row * self.num_cols + col];
-        *value
-    }
-
-    fn loc(&self, index: usize) -> (usize, usize) {
-        let row: usize = index / self.num_cols;
-        let col: usize = index % self.num_cols;
-        (row, col)
-    }
-
-    fn build(contents: String) -> Grid {
-        let mut data: Vec<u8> = Vec::new();
-        let mut num_rows: usize = 0;
-        let mut num_cols: usize = 0;
-        for line in contents.lines() {
-            let mut l: Vec<u8> = line
-                .chars()
-                .map(|c| c.to_digit(10).unwrap() as u8)
-                .collect();
-            if num_cols != 0 && line.len() != num_cols {
-                panic!("Unequal number of columns in input!")
-            }
-            num_cols = line.len();
-            data.append(&mut l);
-            num_rows += 1;
-        }
-        Grid {
-            num_rows,
-            num_cols,
-            data,
-        }
-    }
 }
 
 fn scenic_score(grid: &Grid, index: usize) -> u32 {
@@ -132,20 +91,13 @@ fn is_visible(grid: &Grid, index: usize) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::common::tests;
     use std::fs;
-
-    fn mock_grid() -> Grid {
-        Grid {
-            num_rows: 2,
-            num_cols: 5,
-            data: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 0],
-        }
-    }
 
     #[test]
     fn test_visible() {
         for n in 0..10 {
-            assert!(is_visible(&mock_grid(), n));
+            assert!(is_visible(&tests::mock_grid(), n));
         }
         let test_contents = fs::read_to_string("inputs/2022.8.test").unwrap();
         let test_grid = Grid::build(test_contents);
@@ -161,27 +113,5 @@ mod tests {
         let test_grid = Grid::build(test_contents);
         assert_eq!(scenic_score(&test_grid, 7), 4);
         assert_eq!(scenic_score(&test_grid, 17), 8);
-    }
-
-    #[test]
-    fn test_loc() {
-        let grid = mock_grid();
-        assert_eq!(grid.loc(2), (0, 2));
-        assert_eq!(grid.loc(8), (1, 3));
-    }
-    #[test]
-    fn test_get() {
-        let grid = mock_grid();
-        assert_eq!(grid.get(0, 0), 1);
-        assert_eq!(grid.get(0, 4), 5);
-        assert_eq!(grid.get(1, 2), 8);
-        assert_eq!(grid.get(1, 4), 0);
-    }
-
-    #[test]
-    fn test_grid() {
-        let test_input = String::from("12345\n67890\n");
-        let test_grid = mock_grid();
-        assert_eq!(Grid::build(test_input), test_grid);
     }
 }
