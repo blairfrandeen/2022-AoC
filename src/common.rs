@@ -6,15 +6,22 @@ pub struct Grid {
 }
 
 impl Grid {
-    pub fn get(&self, row: usize, col: usize) -> u8 {
+    pub fn get(&self, row: usize, col: usize) -> Result<u8, &str> {
+        // Get the value at a given `row` and `col` in the grid.
+        if row > self.num_rows || col > self.num_cols {
+            return Err("Row or column out of bounds");
+        }
         let value: &u8 = &self.data[row * self.num_cols + col];
-        *value
+        Ok(*value)
     }
 
-    pub fn loc(&self, index: usize) -> (usize, usize) {
+    pub fn loc(&self, index: usize) -> Result<(usize, usize), &str> {
+        if index > self.data.len() {
+            return Err("Index out of bounds");
+        }
         let row: usize = index / self.num_cols;
         let col: usize = index % self.num_cols;
-        (row, col)
+        Ok((row, col))
     }
 
     pub fn build(contents: String) -> Grid {
@@ -54,16 +61,19 @@ pub mod tests {
     #[test]
     fn test_loc() {
         let grid = mock_grid();
-        assert_eq!(grid.loc(2), (0, 2));
-        assert_eq!(grid.loc(8), (1, 3));
+        assert_eq!(grid.loc(2), Ok((0, 2)));
+        assert_eq!(grid.loc(8), Ok((1, 3)));
+        assert_eq!(grid.loc(8888), Err("Index out of bounds"));
     }
     #[test]
     fn test_get() {
         let grid = mock_grid();
-        assert_eq!(grid.get(0, 0), 49);
-        assert_eq!(grid.get(0, 4), 53);
-        assert_eq!(grid.get(1, 2), 56);
-        assert_eq!(grid.get(1, 4), 48);
+        assert_eq!(grid.get(0, 0), Ok(49));
+        assert_eq!(grid.get(0, 4), Ok(53));
+        assert_eq!(grid.get(1, 2), Ok(56));
+        assert_eq!(grid.get(1, 4), Ok(48));
+        assert_eq!(grid.get(1, 10), Err("Row or column out of bounds"));
+        assert_eq!(grid.get(10, 1), Err("Row or column out of bounds"));
     }
 
     #[test]

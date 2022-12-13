@@ -7,17 +7,18 @@ pub fn main(contents: String) {
     let grid = Grid::build(contents);
     let start = linear_search(&grid.data, START).unwrap();
     let end = linear_search(&grid.data, END).unwrap();
-    println!("Start at {:?}", grid.loc(start));
-    println!("End at {:?}", grid.loc(end));
+    println!("Start at {:?}", grid.loc(start).unwrap());
+    println!("End at {:?}", grid.loc(end).unwrap());
     println!("Hello AoC!")
 }
 
 fn next_moves(grid: Grid, index: usize) -> Vec<usize> {
     let mut moves: Vec<usize> = Vec::new();
-    let (r, c) = grid.loc(index);
+    let (r, c) = grid.loc(index).unwrap();
     let value = grid.data[index];
     moves
 }
+
 fn linear_search(haystack: &Vec<u8>, needle: u8) -> Option<usize> {
     for index in 0..haystack.len() {
         if haystack[index] == needle {

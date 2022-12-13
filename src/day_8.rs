@@ -15,33 +15,33 @@ pub fn main(contents: String) {
 
 fn scenic_score(grid: &Grid, index: usize) -> u32 {
     let height: &u8 = &grid.data[index];
-    let (row, col) = grid.loc(index);
+    let (row, col) = grid.loc(index).unwrap();
 
     let mut n_row_before = 0; // LEFT
     for c in 1..=col {
         n_row_before += 1;
-        if grid.get(row, col - c) >= *height {
+        if grid.get(row, col - c).unwrap() >= *height {
             break;
         }
     }
     let mut n_row_after = 0; // RIGHT
     for c in col + 1..grid.num_cols {
         n_row_after += 1;
-        if grid.get(row, c) >= *height {
+        if grid.get(row, c).unwrap() >= *height {
             break;
         }
     }
     let mut n_col_before = 0; // UP
     for r in 1..=row {
         n_col_before += 1;
-        if grid.get(row - r, col) >= *height {
+        if grid.get(row - r, col).unwrap() >= *height {
             break;
         }
     }
     let mut n_col_after = 0; // DOWN
     for r in row + 1..grid.num_rows {
         n_col_after += 1;
-        if grid.get(r, col) >= *height {
+        if grid.get(r, col).unwrap() >= *height {
             break;
         }
     }
@@ -54,10 +54,10 @@ fn scenic_score(grid: &Grid, index: usize) -> u32 {
 
 fn is_visible(grid: &Grid, index: usize) -> bool {
     let height: &u8 = &grid.data[index];
-    let (row, col) = grid.loc(index);
+    let (row, col) = grid.loc(index).unwrap();
     let mut row_before: bool = true;
     for c in 0..col {
-        if grid.get(row, c) >= *height {
+        if grid.get(row, c).unwrap() >= *height {
             row_before = false;
             break;
         }
@@ -65,21 +65,21 @@ fn is_visible(grid: &Grid, index: usize) -> bool {
 
     let mut row_after: bool = true;
     for c in col + 1..grid.num_cols {
-        if grid.get(row, c) >= *height {
+        if grid.get(row, c).unwrap() >= *height {
             row_after = false;
             break;
         }
     }
     let mut col_before: bool = true;
     for r in 0..row {
-        if grid.get(r, col) >= *height {
+        if grid.get(r, col).unwrap() >= *height {
             col_before = false;
             break;
         }
     }
     let mut col_after: bool = true;
     for r in row + 1..grid.num_rows {
-        if grid.get(r, col) >= *height {
+        if grid.get(r, col).unwrap() >= *height {
             col_after = false;
             break;
         }
