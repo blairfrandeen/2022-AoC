@@ -22,10 +22,32 @@ use std::collections::HashMap;
 
 pub fn main(contents: String) {
     let file_system = build_directory_map(contents);
-    // println!("{:?}", file_system);
-    for k in file_system.keys() {
-        println!("{:?}", k);
+    let mut sorted_keys: Vec<&String> = file_system.keys().collect();
+    let mut dir_sized: HashMap<String, u32> = HashMap::new();
+    sorted_keys.sort();
+    for index in 0..sorted_keys.len() {
+        let mut size: u32 = 0;
+        let current_key = sorted_keys[index];
+        for next_index in index..sorted_keys.len() {
+            let next_key = sorted_keys[next_index];
+            if next_key.starts_with(current_key) || current_key == "/" {
+                size += file_system[next_key]
+            }
+        }
+        dir_sized.insert(current_key.to_string(), size);
     }
+    // println!("{:?}", dir_sized);
+    let part_1: u32 = dir_sized.values().filter(|s| *s < &(100000 as u32)).sum();
+    println!("Part 1: {}", part_1);
+    let fs_size = 70_000_000;
+    let required_space = 30_000_000;
+    let fs_used: u32 = file_system.values().sum();
+    let to_delete = required_space - (fs_size - fs_used);
+    let mut candidates: Vec<&u32> = dir_sized.values().filter(|v| v >= &&to_delete).collect();
+    candidates.sort();
+    // println!("Part 2 FS Used: {}", fs_used);
+    // println!("Part 2 To Delete: {}", to_delete);
+    println!("Part 2 {:?}", candidates[0]);
 }
 
 fn build_directory_map(contents: String) -> HashMap<String, u32> {
