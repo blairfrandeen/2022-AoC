@@ -22,7 +22,7 @@ fn next_moves(grid: Grid, index: usize) -> Vec<usize> {
 fn neighbors(grid: Grid, index: usize) -> Vec<usize> {
     let mut neighbors: Vec<usize> = Vec::new();
     let (r, c) = grid.loc(index).expect("Call neighbors on invalid index.");
-    let deltas = vec![(0, 1), (1, 0), (-1, 0), (0, -1)];
+    let deltas = vec![(0, 1), (1, 0)]; //, (-1, 0), (0, -1)];
     for delta in deltas {
         if let Ok(location) = grid.ind(r + delta.0, c + delta.1) {
             neighbors.push(location)
