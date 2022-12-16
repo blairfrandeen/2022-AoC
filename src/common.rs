@@ -5,23 +5,37 @@ pub struct Grid {
     pub data: Vec<u8>,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum Error {
+    IndexError,
+}
+
 impl Grid {
-    pub fn get(&self, row: usize, col: usize) -> Result<u8, &str> {
+    pub fn get(&self, row: usize, col: usize) -> Result<u8, Error> {
         // Get the value at a given `row` and `col` in the grid.
         if row > self.num_rows || col > self.num_cols {
-            return Err("Row or column out of bounds");
+            return Err(Error::IndexError);
         }
         let value: &u8 = &self.data[row * self.num_cols + col];
         Ok(*value)
     }
 
-    pub fn loc(&self, index: usize) -> Result<(usize, usize), &str> {
+    pub fn loc(&self, index: usize) -> Result<(usize, usize), Error> {
+        // Get the row and column of a given index
         if index > self.data.len() {
-            return Err("Index out of bounds");
+            return Err(Error::IndexError);
         }
         let row: usize = index / self.num_cols;
         let col: usize = index % self.num_cols;
         Ok((row, col))
+    }
+
+    pub fn ind(&self, row: usize, col: usize) -> Result<usize, Error> {
+        // Get the index at a given `row` and `col` in the grid
+        if row > self.num_rows || col > self.num_cols {
+            return Err(Error::IndexError);
+        }
+        Ok(row * self.num_cols + col)
     }
 
     pub fn build(contents: String) -> Grid {
@@ -63,7 +77,7 @@ pub mod tests {
         let grid = mock_grid();
         assert_eq!(grid.loc(2), Ok((0, 2)));
         assert_eq!(grid.loc(8), Ok((1, 3)));
-        assert_eq!(grid.loc(8888), Err("Index out of bounds"));
+        assert_eq!(grid.loc(8888), Err(Error::IndexError));
     }
     #[test]
     fn test_get() {
@@ -72,8 +86,8 @@ pub mod tests {
         assert_eq!(grid.get(0, 4), Ok(53));
         assert_eq!(grid.get(1, 2), Ok(56));
         assert_eq!(grid.get(1, 4), Ok(48));
-        assert_eq!(grid.get(1, 10), Err("Row or column out of bounds"));
-        assert_eq!(grid.get(10, 1), Err("Row or column out of bounds"));
+        assert_eq!(grid.get(1, 10), Err(Error::IndexError));
+        assert_eq!(grid.get(10, 1), Err(Error::IndexError));
     }
 
     #[test]
