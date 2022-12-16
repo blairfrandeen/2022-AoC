@@ -38,6 +38,29 @@ impl Grid {
         Ok(row * self.num_cols + col)
     }
 
+    pub fn neighbors_lateral(&self, index: usize) -> Result<Vec<usize>, Error> {
+        match self.loc(index) {
+            Ok((row, col)) => {
+                let mut neighbors: Vec<usize> = Vec::new();
+                if col > 0 {
+                    neighbors.push(index - 1);
+                }
+                if col < self.num_cols - 1 {
+                    neighbors.push(index + 1);
+                }
+                if row > 0 {
+                    neighbors.push(self.ind(row - 1, col).unwrap());
+                }
+                if row < self.num_rows - 1 {
+                    neighbors.push(self.ind(row + 1, col).unwrap());
+                }
+                // behind, in front, above below
+                Ok(neighbors)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
     pub fn build(contents: String) -> Grid {
         let mut data: Vec<u8> = Vec::new();
         let mut num_rows: usize = 0;
@@ -70,6 +93,15 @@ pub mod tests {
             num_cols: 5,
             data: digits,
         }
+    }
+
+    #[test]
+    fn test_neighbors() {
+        let grid = mock_grid();
+        assert_eq!(grid.neighbors_lateral(0), Ok(vec![1, 5]));
+        assert_eq!(grid.neighbors_lateral(2), Ok(vec![1, 3, 7]));
+        assert_eq!(grid.neighbors_lateral(7), Ok(vec![6, 8, 2]));
+        assert_eq!(grid.neighbors_lateral(4), Ok(vec![3, 9]));
     }
 
     #[test]
