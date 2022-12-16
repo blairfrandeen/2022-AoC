@@ -21,7 +21,15 @@ This seems like a good use of both the nom crate and the Rc<T> structure.
 use std::collections::HashMap;
 
 pub fn main(contents: String) {
-    let mut cwd = String::new(); //from("/"); // first line of input is home dir
+    let file_system = build_directory_map(contents);
+    // println!("{:?}", file_system);
+    for k in file_system.keys() {
+        println!("{:?}", k);
+    }
+}
+
+fn build_directory_map(contents: String) -> HashMap<String, u32> {
+    let mut cwd = String::new();
     let mut directory_structure: HashMap<String, u32> = HashMap::new();
     let mut cwd_size: u32 = 0;
     for line in contents.lines() {
@@ -32,40 +40,54 @@ pub fn main(contents: String) {
                 if line_items.len() > 2 {
                     // change directory command
                     let key = cwd.clone();
-                    directory_structure.insert(key, cwd_size);
+                    if !directory_structure.contains_key(&key) {
+                        directory_structure.insert(key, cwd_size);
+                    }
                     // reset size counter
                     cwd_size = 0;
-                    // get the directory we're in
-                    println!("Dir is {}", line_items[2]);
+                    // get the directory we're in next
                     cwd = cd(line_items[2], &cwd);
                 }
             }
         }
     }
     let key = cwd.clone();
-    directory_structure.insert(key, cwd_size);
-    println!("{:?}", directory_structure);
+    // two not-as-pretty steps to get everything consistent at the end
+    directory_structure.insert(format!("{key}"), cwd_size);
+    directory_structure.remove("");
+    directory_structure
 }
 
 fn cd<'a>(dir: &'a str, cwd: &'a str) -> String {
-    let mut tree: Vec<&str> = cwd.split('/').collect();
-    tree.pop();
+    let mut path: Vec<&str> = cwd.split_terminator('/').collect();
     if dir == ".." {
-        tree.pop();
-        tree.join("/")
+        path.pop();
     } else {
-        tree.pop();
-        tree.push(dir);
-        format!("{}/", tree.join("/"))
+        path.push(dir);
     }
+    if path.len() > 0 && path[0] == "" {
+        path.remove(0);
+    }
+    path.join("/")
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
 
     #[test]
+    fn test_map() {
+        let input = fs::read_to_string("inputs/2022.7.test").unwrap();
+        let dirs = build_directory_map(input);
+        assert_eq!(dirs["/a"], 94269);
+        assert_eq!(dirs["/a/e"], 584);
+    }
+    #[test]
     fn test_cd() {
-        assert_eq!(cd("lol", "/"), "/lol/");
-        assert_eq!(cd("..", "/lol/"), "/");
+        assert_eq!(cd("wtf", "/lol"), "/lol/wtf");
+        assert_eq!(cd("lol", ""), "/lol");
+        assert_eq!(cd("lol", "/"), "/lol");
+        assert_eq!(cd("..", "/lol"), "");
     }
 }
