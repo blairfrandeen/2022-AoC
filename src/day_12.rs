@@ -1,15 +1,15 @@
 use crate::common::Grid;
 use std::collections::HashSet;
 
-const START: u8 = 'S' as u8;
-const END: u8 = 'E' as u8;
+const START: u8 = b'S';
+const END: u8 = b'E';
 
 pub fn main(contents: String) {
     let mut grid = Grid::build(contents);
-    let start = linear_search(&grid.data, START).unwrap();
-    grid.data[start] = 'a' as u8;
-    let end = linear_search(&grid.data, END).unwrap();
-    grid.data[end] = 'z' as u8;
+    let start = grid.data.iter().position(|&x| x == START).unwrap();
+    grid.data[start] = b'a';
+    let end = grid.data.iter().position(|&x| x == END).unwrap();
+    grid.data[end] = b'z';
 
     println!("Start at {:?}", grid.loc(start).unwrap());
     println!("End at {:?}", grid.loc(end).unwrap());
@@ -18,7 +18,7 @@ pub fn main(contents: String) {
     println!("Part 1: {}", path.len());
     let mut starting_points: Vec<usize> = Vec::new();
     for ind in 0..grid.data.len() {
-        if grid.data[ind] == 'a' as u8 {
+        if grid.data[ind] == b'a' {
             starting_points.push(ind);
         }
     }
@@ -30,7 +30,7 @@ pub fn main(contents: String) {
             }
         }
     }
-    println!("Part 2: {}", min_len);
+    println!("Part 2: {min_len}");
 }
 
 fn bfs(grid: &Grid, start: usize, goal: usize) -> Option<Vec<usize>> {
@@ -38,7 +38,7 @@ fn bfs(grid: &Grid, start: usize, goal: usize) -> Option<Vec<usize>> {
     visited.insert(start);
 
     let mut to_visit = vec![];
-    for mv in next_moves(&grid, start) {
+    for mv in next_moves(grid, start) {
         to_visit.push((mv, vec![mv]));
         // println!("{:?}", to_visit);
     }
@@ -54,7 +54,7 @@ fn bfs(grid: &Grid, start: usize, goal: usize) -> Option<Vec<usize>> {
         if current_pos == goal {
             return Some(current_path);
         }
-        for mv in next_moves(&grid, current_pos) {
+        for mv in next_moves(grid, current_pos) {
             if !visited.contains(&mv) {
                 let mut new_path = current_path.clone();
                 new_path.push(mv);
@@ -71,15 +71,6 @@ fn next_moves(grid: &Grid, index: usize) -> Vec<usize> {
         .into_iter()
         .filter(|h| (grid.data[*h] as i32 - grid.data[index] as i32) <= 1)
         .collect()
-}
-
-fn linear_search(haystack: &Vec<u8>, needle: u8) -> Option<usize> {
-    for index in 0..haystack.len() {
-        if haystack[index] == needle {
-            return Some(index);
-        }
-    }
-    None
 }
 
 #[cfg(test)]
