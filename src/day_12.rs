@@ -6,7 +6,6 @@ const END: u8 = 'E' as u8;
 
 pub fn main(contents: String) {
     let mut grid = Grid::build(contents);
-    // grid.disp();
     let start = linear_search(&grid.data, START).unwrap();
     grid.data[start] = 'a' as u8;
     let end = linear_search(&grid.data, END).unwrap();
@@ -15,24 +14,33 @@ pub fn main(contents: String) {
     println!("Start at {:?}", grid.loc(start).unwrap());
     println!("End at {:?}", grid.loc(end).unwrap());
     println!("Grid Size: {} X {}", grid.num_rows, grid.num_cols);
-    println!("Next moves: {:?}", next_moves(&grid, start));
-    let path = bfs(&grid, start, end);
-    println!("Path length: {}", path.len());
-    println!("Path: {:?}", path);
-    for index in path {
-        grid.data[index] = '*' as u8;
+    let path = bfs(&grid, start, end).unwrap();
+    println!("Part 1: {}", path.len());
+    let mut starting_points: Vec<usize> = Vec::new();
+    for ind in 0..grid.data.len() {
+        if grid.data[ind] == 'a' as u8 {
+            starting_points.push(ind);
+        }
     }
-    grid.disp();
+    let mut min_len: usize = grid.data.len();
+    for point in starting_points {
+        if let Some(path) = bfs(&grid, point, end) {
+            if path.len() < min_len {
+                min_len = path.len()
+            }
+        }
+    }
+    println!("Part 2: {}", min_len);
 }
 
-fn bfs(grid: &Grid, start: usize, goal: usize) -> Vec<usize> {
+fn bfs(grid: &Grid, start: usize, goal: usize) -> Option<Vec<usize>> {
     let mut visited: HashSet<usize> = HashSet::new();
     visited.insert(start);
 
     let mut to_visit = vec![];
     for mv in next_moves(&grid, start) {
         to_visit.push((mv, vec![mv]));
-        println!("{:?}", to_visit);
+        // println!("{:?}", to_visit);
     }
 
     while !to_visit.is_empty() {
@@ -44,7 +52,7 @@ fn bfs(grid: &Grid, start: usize, goal: usize) -> Vec<usize> {
         }
         visited.insert(current_pos);
         if current_pos == goal {
-            return current_path;
+            return Some(current_path);
         }
         for mv in next_moves(&grid, current_pos) {
             if !visited.contains(&mv) {
@@ -54,7 +62,7 @@ fn bfs(grid: &Grid, start: usize, goal: usize) -> Vec<usize> {
             }
         }
     }
-    panic!("Goal unreachable!");
+    None
 }
 
 fn next_moves(grid: &Grid, index: usize) -> Vec<usize> {
