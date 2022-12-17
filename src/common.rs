@@ -20,6 +20,15 @@ impl Grid {
         Ok(*value)
     }
 
+    pub fn disp(&self) {
+        for row in 0..self.num_rows {
+            for col in 0..self.num_cols {
+                print!("{}", self.data[row * self.num_cols + col] as char);
+            }
+            println!();
+        }
+    }
+
     pub fn loc(&self, index: usize) -> Result<(usize, usize), Error> {
         // Get the row and column of a given index
         if index > self.data.len() {
@@ -85,7 +94,20 @@ impl Grid {
 #[cfg(test)]
 pub mod tests {
     use super::*;
+    use indoc::indoc;
 
+    fn mock_grid_2() -> Grid {
+        let g2 = indoc!(
+            "
+        abcde
+        fghij
+        klmno
+        pqrst
+        "
+        )
+        .to_string();
+        Grid::build(g2)
+    }
     pub fn mock_grid() -> Grid {
         let digits: Vec<u8> = "1234567890".chars().map(|c| c as u8).collect();
         Grid {
@@ -95,6 +117,11 @@ pub mod tests {
         }
     }
 
+    fn neighbor_letters(grid: &Grid, r: usize, c: usize) -> Vec<char> {
+        let index = grid.ind(r, c).unwrap();
+        let neighbors = grid.neighbors_lateral(index).unwrap();
+        neighbors.iter().map(|n| grid.data[*n] as char).collect()
+    }
     #[test]
     fn test_neighbors() {
         let grid = mock_grid();
@@ -102,6 +129,17 @@ pub mod tests {
         assert_eq!(grid.neighbors_lateral(2), Ok(vec![1, 3, 7]));
         assert_eq!(grid.neighbors_lateral(7), Ok(vec![6, 8, 2]));
         assert_eq!(grid.neighbors_lateral(4), Ok(vec![3, 9]));
+
+        let g2 = mock_grid_2();
+        let ind = g2.ind(1, 1).unwrap();
+        assert_eq!(g2.data[ind], 'g' as u8);
+        assert_eq!(neighbor_letters(&g2, 1, 1), vec!['f', 'h', 'b', 'l']);
+        assert_eq!(neighbor_letters(&g2, 0, 0), vec!['b', 'f']);
+        assert_eq!(neighbor_letters(&g2, 3, 4), vec!['s', 'o']);
+        assert_eq!(neighbor_letters(&g2, 0, 4), vec!['d', 'j']);
+        assert_eq!(neighbor_letters(&g2, 3, 0), vec!['q', 'k']);
+        assert_eq!(neighbor_letters(&g2, 3, 1), vec!['p', 'r', 'l']);
+        assert_eq!(neighbor_letters(&g2, 2, 4), vec!['n', 'j', 't']);
     }
 
     #[test]
@@ -120,6 +158,12 @@ pub mod tests {
         assert_eq!(grid.get(1, 4), Ok(48));
         assert_eq!(grid.get(1, 10), Err(Error::IndexError));
         assert_eq!(grid.get(10, 1), Err(Error::IndexError));
+
+        let g2 = mock_grid_2();
+        assert_eq!(g2.get(0, 0), Ok('a' as u8));
+        assert_eq!(g2.get(2, 2), Ok('m' as u8));
+        assert_eq!(g2.get(3, 4), Ok('t' as u8));
+        assert_eq!(g2.get(1, 0), Ok('f' as u8));
     }
 
     #[test]
@@ -128,5 +172,8 @@ pub mod tests {
         let test_input = String::from("12345\n67890\n");
         let test_grid = mock_grid();
         assert_eq!(Grid::build(test_input), test_grid);
+        let test_grid_2 = mock_grid_2();
+        assert_eq!(test_grid_2.num_cols, 5);
+        assert_eq!(test_grid_2.num_rows, 4);
     }
 }
