@@ -33,7 +33,7 @@ fn take_turn(monkeys: &mut HashMap<usize, Monkey>) {
         while let Some(mut item) = current_monkey.items.pop() {
             current_monkey.num_inspections += 1; // inspect item
                                                  // item = item % current_monkey.test as u64;
-            item = (current_monkey.operation)(item.into());
+            item = (current_monkey.operation)(item);
             // item /= 3; // decrease worry
             item %= monkey_test_mod as u64; // decrease worry
             match item % current_monkey.test as u64 {
@@ -58,7 +58,7 @@ fn monkey_business(monkeys: &HashMap<usize, Monkey>) -> u64 {
     let mut inspections: Vec<u64> = monkeys.iter().map(|(_, m)| m.num_inspections).collect();
     inspections.sort();
     inspections.reverse();
-    inspections[0] as u64 * inspections[1] as u64
+    inspections[0] * inspections[1]
 }
 
 fn parse_monkeys(input: String) -> HashMap<usize, Monkey> {
@@ -109,7 +109,7 @@ fn parse_items(line: &str) -> Vec<u64> {
 }
 
 fn parse_operation(op: &str) -> Box<dyn Fn(u64) -> u64> {
-    let mut line_items: Vec<&str> = op.trim().split_whitespace().collect();
+    let mut line_items: Vec<&str> = op.split_whitespace().collect();
     let constant = match line_items.pop().unwrap() {
         "old" => return Box::new(|x| x * x),
         num => num.parse::<u64>().unwrap(),
@@ -122,8 +122,7 @@ fn parse_operation(op: &str) -> Box<dyn Fn(u64) -> u64> {
 }
 
 fn parse_last(line: &str) -> u32 {
-    line.trim()
-        .split_whitespace()
+    line.split_whitespace()
         .last()
         .unwrap()
         .parse::<u32>()

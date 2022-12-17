@@ -32,8 +32,8 @@ fn part_2(contents: &str) -> i32 {
     part_2_score
 }
 
-fn get_desired_outcome(opponent_choice: &RPS, desired_outcome: &GameResult) -> RPS {
-    let options = vec![RPS::Rock, RPS::Paper, RPS::Scissors];
+fn get_desired_outcome(opponent_choice: &Rps, desired_outcome: &GameResult) -> Rps {
+    let options = vec![Rps::Rock, Rps::Paper, Rps::Scissors];
     for opt in options.into_iter() {
         if rps_winner(&opt, opponent_choice) == *desired_outcome {
             return opt;
@@ -43,7 +43,7 @@ fn get_desired_outcome(opponent_choice: &RPS, desired_outcome: &GameResult) -> R
 }
 
 #[derive(PartialEq, Debug)]
-enum RPS {
+enum Rps {
     Rock,
     Paper,
     Scissors,
@@ -66,54 +66,50 @@ fn get_result(key: char) -> GameResult {
 }
 
 fn read_rps_line(line: &str) -> Option<(char, char)> {
-    let mut chars = line.chars();
-    let p1 = chars.next();
-    if p1.is_none() {
-        None
-    } else {
-        chars.next();
-        let p2 = chars.next();
-        if p2.is_none() {
-            None
-        } else {
-            Some((p1.unwrap(), p2.unwrap()))
-        }
+    let chars: Vec<char> = line
+        .split_whitespace()
+        .map(|c| c.parse::<char>().unwrap())
+        .collect();
+    match chars.len() {
+        2 => Some((chars[0], chars[1])),
+        0 => None,
+        _ => panic!("Too many characters!"),
     }
 }
 
-fn rps_winner(your_choice: &RPS, opponents_choice: &RPS) -> GameResult {
+fn rps_winner(your_choice: &Rps, opponents_choice: &Rps) -> GameResult {
     if your_choice == opponents_choice {
         GameResult::Draw
     } else {
         match (your_choice, opponents_choice) {
-            (RPS::Rock, RPS::Paper) => GameResult::Loss,
-            (RPS::Paper, RPS::Rock) => GameResult::Win,
-            (RPS::Rock, RPS::Scissors) => GameResult::Win,
-            (RPS::Scissors, RPS::Rock) => GameResult::Loss,
-            (RPS::Paper, RPS::Scissors) => GameResult::Loss,
-            (RPS::Scissors, RPS::Paper) => GameResult::Win,
+            (Rps::Rock, Rps::Paper) => GameResult::Loss,
+            (Rps::Paper, Rps::Rock) => GameResult::Win,
+            (Rps::Rock, Rps::Scissors) => GameResult::Win,
+            (Rps::Scissors, Rps::Rock) => GameResult::Loss,
+            (Rps::Paper, Rps::Scissors) => GameResult::Loss,
+            (Rps::Scissors, Rps::Paper) => GameResult::Win,
             _ => panic!("invalid choices!"),
         }
     }
 }
 
-fn get_choice(key: char) -> RPS {
+fn get_choice(key: char) -> Rps {
     match key {
-        'A' => RPS::Rock,
-        'X' => RPS::Rock,
-        'B' => RPS::Paper,
-        'Y' => RPS::Paper,
-        'C' => RPS::Scissors,
-        'Z' => RPS::Scissors,
+        'A' => Rps::Rock,
+        'X' => Rps::Rock,
+        'B' => Rps::Paper,
+        'Y' => Rps::Paper,
+        'C' => Rps::Scissors,
+        'Z' => Rps::Scissors,
         _ => panic!("Invalid Key!"),
     }
 }
 
-fn calculate_score(choice: &RPS, result: GameResult) -> i32 {
+fn calculate_score(choice: &Rps, result: GameResult) -> i32 {
     let score = match choice {
-        RPS::Rock => 1,
-        RPS::Paper => 2,
-        RPS::Scissors => 3,
+        Rps::Rock => 1,
+        Rps::Paper => 2,
+        Rps::Scissors => 3,
     };
     match result {
         GameResult::Loss => score,
@@ -128,7 +124,7 @@ mod tests {
 
     #[test]
     fn test_choice() {
-        assert_eq!(get_choice('X'), RPS::Rock);
+        assert_eq!(get_choice('X'), Rps::Rock);
     }
 
     #[test]
@@ -139,24 +135,24 @@ mod tests {
 
     #[test]
     fn test_calculate() {
-        assert_eq!(calculate_score(&RPS::Paper, GameResult::Win), 8);
-        assert_eq!(calculate_score(&RPS::Rock, GameResult::Loss), 1);
-        assert_eq!(calculate_score(&RPS::Scissors, GameResult::Draw), 6);
+        assert_eq!(calculate_score(&Rps::Paper, GameResult::Win), 8);
+        assert_eq!(calculate_score(&Rps::Rock, GameResult::Loss), 1);
+        assert_eq!(calculate_score(&Rps::Scissors, GameResult::Draw), 6);
     }
     #[test]
     fn test_winner() {
-        let p1 = RPS::Rock;
-        let p2 = RPS::Scissors;
+        let p1 = Rps::Rock;
+        let p2 = Rps::Scissors;
         let answer = rps_winner(&p1, &p2);
         assert_eq!(answer, GameResult::Win);
 
-        let p1 = RPS::Paper;
-        let p2 = RPS::Scissors;
+        let p1 = Rps::Paper;
+        let p2 = Rps::Scissors;
         let answer = rps_winner(&p1, &p2);
         assert_eq!(answer, GameResult::Loss);
 
-        let p1 = RPS::Paper;
-        let p2 = RPS::Paper;
+        let p1 = Rps::Paper;
+        let p2 = Rps::Paper;
         let answer = rps_winner(&p1, &p2);
         assert_eq!(answer, GameResult::Draw);
     }
