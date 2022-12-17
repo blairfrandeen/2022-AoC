@@ -95,11 +95,4 @@ mod tests {
         assert_eq!(next_moves(&g, 0), vec![1]);
         assert_eq!(next_moves(&g, 4), vec![3, 5, 1])
     }
-
-    #[test]
-    fn test_search() {
-        let h = vec![1, 2, 3, 4, 5];
-        assert_eq!(linear_search(&h, 3), Some(2));
-        assert_eq!(linear_search(&h, 7), None);
-    }
 }
