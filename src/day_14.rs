@@ -11,31 +11,23 @@ pub fn main(contents: String) {
         coord_min_max(&paths, cmp::min, Point::col),
         coord_min_max(&paths, cmp::max, Point::col)
     );
-    let num_cols: usize = coord_min_max(&paths, cmp::max, Point::col) as usize;
-    let min_col: usize = coord_min_max(&paths, cmp::min, Point::col) as usize;
-    let min_row: usize = 0; //coord_min_max(&paths, cmp::min, Point::row) as usize;
-    let num_rows: usize = coord_min_max(&paths, cmp::max, Point::row) as usize;
-    let cells = vec![CaveCell::Empty; (num_rows + 1) * (num_cols + 1)];
-
-    let mut cave = Cave {
-        cells,
-        num_rows,
-        num_cols,
-        min_col,
-        min_row,
-    };
-
     let start = Point { c: 500, r: 0 };
-    for path in paths {
-        cave.add_path(path);
-    }
 
-    let mut num_sand = 0;
-    while let Ok(_) = cave.drop_sand(&start) {
-        num_sand += 1;
-    }
-    cave.display();
-    println!("Part 1: {num_sand}");
+    let mut cave_1 = Cave::build(paths.clone());
+    let part_1 = cave_1.fill(&start);
+    cave_1.display();
+    println!("Part 1: {part_1}");
+
+    let mut cave_2 = Cave::build(paths);
+    let mut empty_row = vec![CaveCell::Empty; cave_2.num_cols + 1];
+    let mut floor = vec![CaveCell::Rock; cave_2.num_cols + 1];
+    cave_2.cells.append(&mut empty_row);
+    cave_2.cells.append(&mut floor);
+    cave_2.num_rows += 2;
+
+    let part_2 = cave_2.fill(&start);
+    cave_2.display();
+    println!("Part 2: {part_2}");
 }
 
 #[derive(PartialEq, Debug)]
@@ -48,16 +40,40 @@ struct Cave {
 }
 
 impl Cave {
+    fn fill(&mut self, start: &Point) -> u32 {
+        let mut num_sand = 0;
+        while let Ok(_) = self.drop_sand(&start) {
+            num_sand += 1;
+        }
+        num_sand
+    }
+    fn build(paths: Vec<Path>) -> Cave {
+        let num_cols: usize = coord_min_max(&paths, cmp::max, Point::col) as usize;
+        let min_col: usize = coord_min_max(&paths, cmp::min, Point::col) as usize;
+        let min_row: usize = 0; //coord_min_max(&paths, cmp::min, Point::row) as usize;
+        let num_rows: usize = coord_min_max(&paths, cmp::max, Point::row) as usize;
+        let cells = vec![CaveCell::Empty; (num_rows + 1) * (num_cols + 1)];
+
+        let mut cave = Cave {
+            cells,
+            num_rows,
+            num_cols,
+            min_col,
+            min_row,
+        };
+        for path in paths {
+            cave.add_path(path);
+        }
+        cave
+    }
     fn drop_sand(&mut self, start: &Point) -> Result<(), &str> {
         let mut sand_loc = Point {
             r: start.r,
             c: start.c,
         };
+        let start_index = self.get_index(start.r as usize, start.c as usize);
         loop {
-            if (sand_loc.r as usize) >= self.num_rows
-            // || (sand_loc.c as usize) >= self.num_cols
-            // || (sand_loc.c as usize) <= self.min_col
-            {
+            if (sand_loc.r as usize) >= self.num_rows || self.cells[start_index] == CaveCell::Sand {
                 return Err("Puzzle complete");
             }
             if self.get_cell(sand_loc.r as usize + 1, sand_loc.c as usize) == CaveCell::Empty {
@@ -82,6 +98,7 @@ impl Cave {
         self.cells[index] = CaveCell::Sand;
         Ok(())
     }
+
     fn add_path(&mut self, path: Path) {
         let mut points = path.points.iter();
         let mut current_point = points.next().expect("need more than zero points");
@@ -102,13 +119,9 @@ impl Cave {
         row * self.num_cols + col
     }
 
-    fn get_rc(&self, index: usize) -> (usize, usize) {
-        (index / self.num_cols, index % self.num_cols)
-    }
-
     fn display(&self) {
-        for row in self.min_row..self.num_rows + 1 {
-            for col in self.min_col..self.num_cols + 1 {
+        for row in self.min_row..=self.num_rows {
+            for col in self.min_col..=self.num_cols {
                 match &self.get_cell(row, col) {
                     CaveCell::Rock => print!("{}", ROCK),
                     CaveCell::Sand => print!("{}", SAND),
@@ -160,7 +173,7 @@ enum CaveCell {
     Sand,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 struct Point {
     c: i32, // column
     r: i32, // row
@@ -175,7 +188,7 @@ impl Point {
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 struct Path {
     points: Vec<Point>,
 }
@@ -185,7 +198,7 @@ fn coord_min_max(
     cmp_fn: impl Fn(i32, i32) -> i32,
     coordinate_fn: impl Fn(&Point) -> i32,
 ) -> i32 {
-    // output the maximum x value of any point in the path
+    // output the min or max row or column for any set of paths
     let max: i32 = paths
         .iter()
         .map(|path| {
@@ -193,10 +206,10 @@ fn coord_min_max(
                 .iter()
                 .map(|p| coordinate_fn(p))
                 .reduce(|max, item| cmp_fn(max, item))
-                .unwrap()
+                .expect("Path should have points")
         })
         .reduce(|max, item| cmp_fn(max, item))
-        .unwrap();
+        .expect("Path vector should have paths.");
     max
 }
 
