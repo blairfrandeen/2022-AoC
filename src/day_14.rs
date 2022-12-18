@@ -55,8 +55,8 @@ impl Cave {
         };
         loop {
             if (sand_loc.r as usize) >= self.num_rows
-                || (sand_loc.c as usize) >= self.num_cols
-                || (sand_loc.c as usize) <= self.min_col
+            // || (sand_loc.c as usize) >= self.num_cols
+            // || (sand_loc.c as usize) <= self.min_col
             {
                 return Err("Puzzle complete");
             }
