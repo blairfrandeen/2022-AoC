@@ -1,21 +1,21 @@
 use std::cmp;
 
-const EMPTY: char = ' ';
-const SAND: &str = "⛱";
-const ROCK: &str = "⛰️";
+const EMPTY: char = '.';
+const SAND: char = 'o'; //"⛱";
+const ROCK: char = '#'; //"⛰️";
 
 pub fn main(contents: String) {
     let paths: Vec<Path> = contents.lines().map(|line| parse_path(line)).collect();
     println!(
         "Min/Max Coords: {} - {}",
-        coord_min_max(&paths, cmp::min, Point::get_x),
-        coord_min_max(&paths, cmp::max, Point::get_x)
+        coord_min_max(&paths, cmp::min, Point::col),
+        coord_min_max(&paths, cmp::max, Point::col)
     );
-    let num_cols: usize = coord_min_max(&paths, cmp::max, Point::get_x) as usize;
-    let min_col: usize = coord_min_max(&paths, cmp::min, Point::get_x) as usize;
-    let min_row: usize = coord_min_max(&paths, cmp::min, Point::get_y) as usize;
-    let num_rows: usize = 500 - min_row;
-    let cells = vec![CaveCell::Rock; num_rows * num_cols];
+    let num_cols: usize = coord_min_max(&paths, cmp::max, Point::col) as usize;
+    let min_col: usize = coord_min_max(&paths, cmp::min, Point::col) as usize;
+    let min_row: usize = 0; //coord_min_max(&paths, cmp::min, Point::row) as usize;
+    let num_rows: usize = coord_min_max(&paths, cmp::max, Point::row) as usize;
+    let cells = vec![CaveCell::Empty; (num_rows + 1) * (num_cols + 1)];
 
     let mut cave = Cave {
         cells,
@@ -24,10 +24,11 @@ pub fn main(contents: String) {
         min_col,
         min_row,
     };
+    for path in paths {
+        cave.add_path(path);
+    }
 
     cave.display();
-
-    // println!("{:?}", paths);
 }
 
 #[derive(PartialEq, Debug)]
@@ -40,8 +41,21 @@ struct Cave {
 }
 
 impl Cave {
+    fn add_path(&mut self, path: Path) {
+        let mut points = path.points.iter();
+        let mut current_point = points.next().expect("need more than zero points");
+        while let Some(next_point) = points.next() {
+            let index = &self.get_index(current_point.r as usize, current_point.c as usize);
+            self.cells[*index] = CaveCell::Rock;
+        }
+    }
+
     fn get_cell(&self, row: usize, col: usize) -> CaveCell {
-        self.cells[row * self.num_cols + col]
+        self.cells[self.get_index(row, col)]
+    }
+
+    fn get_index(&self, row: usize, col: usize) -> usize {
+        row * self.num_cols + col
     }
 
     fn get_rc(&self, index: usize) -> (usize, usize) {
@@ -49,8 +63,8 @@ impl Cave {
     }
 
     fn display(&self) {
-        for row in self.min_row..self.num_rows {
-            for col in self.min_col..self.num_cols {
+        for row in self.min_row..self.num_rows + 1 {
+            for col in self.min_col..self.num_cols + 1 {
                 match &self.get_cell(row, col) {
                     CaveCell::Rock => print!("{}", ROCK),
                     CaveCell::Sand => print!("{}", SAND),
@@ -71,16 +85,16 @@ enum CaveCell {
 
 #[derive(PartialEq, Debug)]
 struct Point {
-    x: i32,
-    y: i32,
+    c: i32, // column
+    r: i32, // row
 }
 
 impl Point {
-    fn get_x(&self) -> i32 {
-        self.x
+    fn row(&self) -> i32 {
+        self.r
     }
-    fn get_y(&self) -> i32 {
-        self.y
+    fn col(&self) -> i32 {
+        self.c
     }
 }
 
@@ -115,8 +129,8 @@ fn parse_point(point: &str) -> Point {
         .map(|p| p.parse::<i32>().expect("invalid input"))
         .collect();
     Point {
-        x: values[0],
-        y: values[1],
+        c: values[0],
+        r: values[1],
     }
 }
 
