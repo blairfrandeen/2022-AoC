@@ -1,4 +1,5 @@
 use nom::{bytes::complete::tag, bytes::complete::take_till, character::complete::i32, IResult};
+use std::cmp;
 use std::collections::HashSet;
 use std::ops::RangeInclusive;
 
@@ -34,18 +35,54 @@ pub fn main(contents: String) {
         sensors.push(sensor_cov);
         beacons.insert(beacon);
     }
-    let part_1 = num_row_non_beacon(2_000_000, &sensors, &beacons);
+    let rows_to_search = 2_000_000;
+    // let rows_to_search = 10;
+    let part_1 = num_row_non_beacon(rows_to_search, &sensors, &beacons, None);
+    // let part_1 = num_row_non_beacon(10, &sensors, &beacons, None);
     println!("Part 1: {part_1}");
+    for row in 0..=4_000_000 {
+        let nrnb = num_row_non_beacon(row, &sensors, &beacons, Some(0..=4_000_000));
+        // let span = range_total_span
+        if nrnb == 4_000_000 {
+            let mut row_covered_ranges = get_row_coverage_ranges(row, &sensors);
+            row_covered_ranges = truncate_ranges(row_covered_ranges, 0, 4_000_000);
+            row_covered_ranges = merge_ranges(row_covered_ranges);
+            println!(
+                "Part 2: {}",
+                tuning_frequency(row, row_covered_ranges, 4_000_000)
+            );
+            break;
+        }
+    }
 }
 
-fn num_row_non_beacon(row: i32, sensors: &Vec<SensorCoverage>, beacons: &HashSet<Point>) -> i32 {
+fn tuning_frequency(row: i32, covered_ranges: Vec<RangeInclusive<i32>>, multiplier: i32) -> i64 {
+    row as i64 + multiplier as i64 * (*covered_ranges[0].end() as i64 + 1)
+}
+
+fn get_row_coverage_ranges(row: i32, sensors: &Vec<SensorCoverage>) -> Vec<RangeInclusive<i32>> {
     let mut row_cov: Vec<RangeInclusive<i32>> = Vec::new();
     for s in sensors {
         if let Some(cov) = s.row_coverage(row) {
             row_cov.push(cov);
         }
     }
-    range_total_coverage(&merge_ranges(row_cov)) - beacons_per_row(&beacons, row)
+    row_cov
+}
+fn num_row_non_beacon(
+    row: i32,
+    sensors: &Vec<SensorCoverage>,
+    beacons: &HashSet<Point>,
+    limits: Option<RangeInclusive<i32>>,
+) -> i32 {
+    let mut row_cov = get_row_coverage_ranges(row, &sensors);
+    if row_cov.is_empty() {
+        return 0;
+    }
+    if let Some(lim) = limits {
+        row_cov = truncate_ranges(row_cov, *lim.start(), *lim.end());
+    }
+    range_total_coverage(&merge_ranges(row_cov)) // - beacons_per_row(&beacons, row)
 }
 
 fn beacons_per_row(beacons: &HashSet<Point>, row: i32) -> i32 {
@@ -118,10 +155,38 @@ fn merge_ranges(mut ranges: Vec<RangeInclusive<i32>>) -> Vec<RangeInclusive<i32>
     merged_ranges
 }
 
+fn truncate_ranges(
+    ranges: Vec<RangeInclusive<i32>>,
+    min_bound: i32,
+    max_bound: i32,
+) -> Vec<RangeInclusive<i32>> {
+    let mut truncated_ranges: Vec<RangeInclusive<i32>> = Vec::new();
+    for range in ranges {
+        // discard ranges that are completely out of bounds
+        if range.end() < &min_bound || range.start() > &max_bound {
+            continue;
+        }
+        let new_start = cmp::max(range.start(), &min_bound);
+        let new_end = cmp::min(range.end(), &max_bound);
+        truncated_ranges.push(*new_start..=*new_end);
+    }
+    truncated_ranges
+}
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    #[test]
+    fn test_truncate_ranges() {
+        let r1: Vec<RangeInclusive<i32>> = vec![-1..=4, 6..=70];
+        assert_eq!(truncate_ranges(r1, 0, 50), vec![0..=4, 6..=50]);
+        // truncate both sides of a range
+        let r2: Vec<RangeInclusive<i32>> = vec![-1..=44];
+        assert_eq!(truncate_ranges(r2, 0, 10), vec![0..=10]);
+        // discard ranges that are far out of bounds
+        let r3: Vec<RangeInclusive<i32>> = vec![-10..=-5, 8..=10, 100..=300];
+        assert_eq!(truncate_ranges(r3, 5, 15), vec![8..=10]);
+    }
     #[test]
     fn test_coverage() {
         let r1: Vec<RangeInclusive<i32>> = vec![1..=4, 6..=7];
