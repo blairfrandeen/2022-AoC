@@ -5,7 +5,7 @@ const SAND: &str = "⛱";
 const ROCK: &str = "⛰️";
 
 pub fn main(contents: String) {
-    let paths: Vec<Path> = contents.lines().map(|line| parse_path(line)).collect();
+    let paths: Vec<Path> = contents.lines().map(parse_path).collect();
     println!(
         "Min/Max Coords: {} - {}",
         coord_min_max(&paths, cmp::min, Point::col),
@@ -42,7 +42,7 @@ struct Cave {
 impl Cave {
     fn fill(&mut self, start: &Point) -> u32 {
         let mut num_sand = 0;
-        while let Ok(_) = self.drop_sand(&start) {
+        while self.drop_sand(start).is_ok() {
             num_sand += 1;
         }
         num_sand
@@ -102,7 +102,7 @@ impl Cave {
     fn add_path(&mut self, path: Path) {
         let mut points = path.points.iter();
         let mut current_point = points.next().expect("need more than zero points");
-        while let Some(next_point) = points.next() {
+        for next_point in points {
             for point in points_between(current_point, next_point) {
                 let index = &self.get_index(point.r as usize, point.c as usize);
                 self.cells[*index] = CaveCell::Rock;
@@ -123,9 +123,9 @@ impl Cave {
         for row in self.min_row..=self.num_rows {
             for col in self.min_col..=self.num_cols {
                 match &self.get_cell(row, col) {
-                    CaveCell::Rock => print!("{}", ROCK),
-                    CaveCell::Sand => print!("{}", SAND),
-                    CaveCell::Empty => print!("{}", EMPTY),
+                    CaveCell::Rock => print!("{ROCK}"),
+                    CaveCell::Sand => print!("{SAND}"),
+                    CaveCell::Empty => print!("{EMPTY}"),
                 }
             }
             println!();
@@ -160,7 +160,7 @@ fn points_between(p1: &Point, p2: &Point) -> Vec<Point> {
         }
         // rows are different
     } else {
-        println!("{:?} {:?}", p1, p2);
+        println!("{p1:?} {p2:?}");
         panic!("rows and cols both different!");
     }
     points
@@ -194,9 +194,9 @@ struct Path {
 }
 
 fn coord_min_max(
-    paths: &Vec<Path>,
+    paths: &[Path],
     cmp_fn: impl Fn(i32, i32) -> i32,
-    coordinate_fn: impl Fn(&Point) -> i32,
+    mut coordinate_fn: impl Fn(&Point) -> i32,
 ) -> i32 {
     // output the min or max row or column for any set of paths
     let max: i32 = paths
@@ -204,7 +204,7 @@ fn coord_min_max(
         .map(|path| {
             path.points
                 .iter()
-                .map(|p| coordinate_fn(p))
+                .map(&mut coordinate_fn)
                 .reduce(|max, item| cmp_fn(max, item))
                 .expect("Path should have points")
         })
@@ -225,7 +225,7 @@ fn parse_point(point: &str) -> Point {
 }
 
 fn parse_path(path: &str) -> Path {
-    let points: Vec<Point> = path.split(" -> ").map(|point| parse_point(point)).collect();
+    let points: Vec<Point> = path.split(" -> ").map(parse_point).collect();
     Path { points }
 }
 
