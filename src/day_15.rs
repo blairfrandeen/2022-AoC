@@ -75,14 +75,15 @@ fn num_row_non_beacon(
     beacons: &HashSet<Point>,
     limits: Option<RangeInclusive<i32>>,
 ) -> i32 {
-    let mut row_cov = get_row_coverage_ranges(row, &sensors);
+    let mut row_cov = get_row_coverage_ranges(row, sensors);
     if row_cov.is_empty() {
         return 0;
     }
     if let Some(lim) = limits {
         row_cov = truncate_ranges(row_cov, *lim.start(), *lim.end());
+        return range_total_coverage(&merge_ranges(row_cov));
     }
-    range_total_coverage(&merge_ranges(row_cov)) // - beacons_per_row(&beacons, row)
+    range_total_coverage(&merge_ranges(row_cov)) - beacons_per_row(beacons, row)
 }
 
 fn beacons_per_row(beacons: &HashSet<Point>, row: i32) -> i32 {
@@ -114,7 +115,7 @@ fn i32_after_eq(s: &str) -> IResult<&str, i32> {
     Ok((num, res))
 }
 
-fn range_total_span(ranges: &Vec<RangeInclusive<i32>>) -> i32 {
+fn _range_total_span(ranges: &[RangeInclusive<i32>]) -> i32 {
     ranges.last().unwrap().end() - ranges.first().unwrap().start()
 }
 
@@ -128,10 +129,10 @@ fn range_total_coverage(ranges: &Vec<RangeInclusive<i32>>) -> i32 {
 fn merge_ranges(mut ranges: Vec<RangeInclusive<i32>>) -> Vec<RangeInclusive<i32>> {
     // given a list of ranges, merge them into a minimal list of ranges
     let mut merged_ranges: Vec<RangeInclusive<i32>> = Vec::new();
-    ranges.sort_by(|r1, r2| r1.start().cmp(&r2.start()));
+    ranges.sort_by(|r1, r2| r1.start().cmp(r2.start()));
     let mut range_iter = ranges.into_iter();
     merged_ranges.push(range_iter.next().expect("At least one range"));
-    while let Some(next_range) = range_iter.next() {
+    for next_range in range_iter {
         let current_range = merged_ranges.pop().expect("At least one range");
         // println!("{:?}, {:?}", current_range, next_range);
         if (next_range.start() - current_range.end() == 1)
@@ -172,6 +173,7 @@ fn truncate_ranges(
     }
     truncated_ranges
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -197,9 +199,9 @@ mod tests {
     #[test]
     fn test_span() {
         let r1: Vec<RangeInclusive<i32>> = vec![1..=5, 3..=7];
-        assert_eq!(range_total_span(&r1), 6);
+        assert_eq!(_range_total_span(&r1), 6);
         let r2: Vec<RangeInclusive<i32>> = vec![-10..=5, 10..=20, 50..=70];
-        assert_eq!(range_total_span(&r2), 80);
+        assert_eq!(_range_total_span(&r2), 80);
     }
     #[test]
     fn test_merge_range() {
