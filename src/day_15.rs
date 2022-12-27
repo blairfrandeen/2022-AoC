@@ -2,8 +2,6 @@ use nom::{bytes::complete::tag, bytes::complete::take_till, character::complete:
 use std::cmp;
 use std::collections::HashSet;
 use std::ops::RangeInclusive;
-use std::sync::mpsc;
-use std::thread;
 use std::time;
 
 #[derive(Debug, Eq, PartialEq, Hash)]
@@ -50,14 +48,19 @@ fn part_2(
     sensors: &Vec<SensorCoverage>,
     beacons: &HashSet<Point>,
 ) -> i64 {
-    let limit_cpy = limits.clone();
-    for row in limits {
-        let nrnb = num_row_non_beacon(row, &sensors, &beacons, Some(limit_cpy.clone()));
-        if nrnb == *limit_cpy.end() {
-            let mut row_covered_ranges = get_row_coverage_ranges(row, &sensors);
-            row_covered_ranges = truncate_ranges(row_covered_ranges, 0, *limit_cpy.end());
-            row_covered_ranges = merge_ranges(row_covered_ranges);
-            return tuning_frequency(row, row_covered_ranges);
+    let ranges = split_range(limits.clone(), 10);
+    for range in ranges {
+        let start_row = *range.start();
+        let end_row = *range.end();
+        println!("Checking from {} to {}", &start_row, &end_row);
+        for row in start_row..=end_row {
+            let nrnb = num_row_non_beacon(row, &sensors, &beacons, Some(&limits));
+            if nrnb == *limits.end() {
+                let mut row_covered_ranges = get_row_coverage_ranges(row, &sensors);
+                row_covered_ranges = truncate_ranges(row_covered_ranges, 0, *limits.end());
+                row_covered_ranges = merge_ranges(row_covered_ranges);
+                return tuning_frequency(row, row_covered_ranges);
+            }
         }
     }
     unreachable!("Solution should exist");
@@ -89,7 +92,7 @@ fn num_row_non_beacon(
     row: i32,
     sensors: &Vec<SensorCoverage>,
     beacons: &HashSet<Point>,
-    limits: Option<RangeInclusive<i32>>,
+    limits: Option<&RangeInclusive<i32>>,
 ) -> i32 {
     let mut row_cov = get_row_coverage_ranges(row, sensors);
     if row_cov.is_empty() {
@@ -190,10 +193,31 @@ fn truncate_ranges(
     truncated_ranges
 }
 
+fn split_range(range: RangeInclusive<i32>, num_splits: usize) -> Vec<RangeInclusive<i32>> {
+    let span = range.end() - range.start();
+    let mut splits: Vec<RangeInclusive<i32>> = Vec::new();
+    let split_size: i32 = span / num_splits as i32;
+    let mut start = *range.start();
+    for _ in 0..num_splits {
+        let split_end = start + split_size;
+        splits.push(start..=split_end.clone());
+        start = split_end;
+    }
+    splits
+}
 #[cfg(test)]
 mod tests {
     use super::*;
     use test::Bencher;
+    #[test]
+    fn test_split_range() {
+        assert_eq!(split_range(1..=100, 10).len(), 10);
+        assert_eq!(split_range(1..=10, 3).len(), 3);
+        assert_eq!(split_range(1..=10, 3)[2], 7..=10);
+        assert_eq!(split_range(1..=16, 3).len(), 3);
+        assert_eq!(split_range(1..=16, 3)[2], 11..=16);
+    }
+
     #[test]
     fn test_part_1() {
         let input = include_str!("../inputs/2022.15.test").to_string();
