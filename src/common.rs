@@ -91,11 +91,46 @@ impl Grid {
     }
 }
 
+fn b2(input: &str) -> Grid {
+    let mut num_rows: usize = 0;
+    let data: Vec<u8> = input
+        .chars()
+        .filter(|c| {
+            let m: bool = *c != '\n';
+            if !m {
+                num_rows += 1;
+            }
+            m
+        })
+        .map(|c| c as u8)
+        .collect();
+    let num_cols = data.len() / num_rows;
+    // println!("Rows: {num_rows} Cols: {num_cols} \n{:?}", data);
+    Grid {
+        num_rows,
+        num_cols,
+        data,
+    }
+}
+
 #[cfg(test)]
 pub mod tests {
     use super::*;
     use indoc::indoc;
+    use test::Bencher;
 
+    #[test]
+    fn test_b2() {
+        let g1 = indoc!(
+            "
+        1233
+        3485
+        3485
+        8894
+        "
+        );
+        assert_eq!(b2(g1.clone()), Grid::build(g1.to_string()));
+    }
     fn mock_grid_2() -> Grid {
         let g2 = indoc!(
             "
@@ -175,5 +210,13 @@ pub mod tests {
         let test_grid_2 = mock_grid_2();
         assert_eq!(test_grid_2.num_cols, 5);
         assert_eq!(test_grid_2.num_rows, 4);
+    }
+    #[bench]
+    fn bench_grid(b: &mut Bencher) {
+        b.iter(|| Grid::build(include_str!("../inputs/2022.8").to_string()));
+    }
+    #[bench]
+    fn bench_grid2(b: &mut Bencher) {
+        b.iter(|| b2(include_str!("../inputs/2022.8")));
     }
 }
