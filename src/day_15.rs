@@ -50,18 +50,20 @@ fn part_2(
 ) -> i64 {
     let ranges = split_range(limits.clone(), 10);
     for range in ranges {
-        let start_row = *range.start();
-        let end_row = *range.end();
-        println!("Checking from {} to {}", &start_row, &end_row);
-        for row in start_row..=end_row {
-            let nrnb = num_row_non_beacon(row, &sensors, &beacons, Some(&limits));
-            if nrnb == *limits.end() {
-                let mut row_covered_ranges = get_row_coverage_ranges(row, &sensors);
-                row_covered_ranges = truncate_ranges(row_covered_ranges, 0, *limits.end());
-                row_covered_ranges = merge_ranges(row_covered_ranges);
-                return tuning_frequency(row, row_covered_ranges);
+        thread::spawn(move || {
+            let start_row = *range.start();
+            let end_row = *range.end();
+            println!("Checking from {} to {}", &start_row, &end_row);
+            for row in start_row..=end_row {
+                let nrnb = num_row_non_beacon(row, &sensors, &beacons, Some(&limits));
+                if nrnb == *limits.end() {
+                    let mut row_covered_ranges = get_row_coverage_ranges(row, &sensors);
+                    row_covered_ranges = truncate_ranges(row_covered_ranges, 0, *limits.end());
+                    row_covered_ranges = merge_ranges(row_covered_ranges);
+                    return tuning_frequency(row, row_covered_ranges);
+                }
             }
-        }
+        });
     }
     unreachable!("Solution should exist");
 }
