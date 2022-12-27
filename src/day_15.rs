@@ -2,6 +2,9 @@ use nom::{bytes::complete::tag, bytes::complete::take_till, character::complete:
 use std::cmp;
 use std::collections::HashSet;
 use std::ops::RangeInclusive;
+use std::sync::mpsc;
+use std::thread;
+use std::time;
 
 #[derive(Debug, Eq, PartialEq, Hash)]
 struct Point {
@@ -63,7 +66,10 @@ fn part_2(
 pub fn main(contents: String) {
     let (sensors, beacons) = build_sensor_beacon_map(contents);
     println!("Part 1: {}", part_1(2_000_000, &sensors, &beacons));
+    let start_time = time::Instant::now();
     println!("Part 2: {}", part_2(0..=4_000_000, &sensors, &beacons));
+    let end_time = start_time.elapsed();
+    println!("Part 2 completed in {} seconds.", end_time.as_secs_f32());
 }
 
 fn tuning_frequency(row: i32, covered_ranges: Vec<RangeInclusive<i32>>) -> i64 {
@@ -187,6 +193,7 @@ fn truncate_ranges(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
     #[test]
     fn test_part_1() {
         let input = include_str!("../inputs/2022.15.test").to_string();
@@ -200,6 +207,13 @@ mod tests {
         let input = include_str!("../inputs/2022.15.test").to_string();
         let (sensors, beacons) = build_sensor_beacon_map(input);
         assert_eq!(part_2(0..=20, &sensors, &beacons), 56000011);
+    }
+
+    #[bench]
+    fn bench_part_2(b: &mut Bencher) {
+        let input = include_str!("../inputs/2022.15.test").to_string();
+        let (sensors, beacons) = build_sensor_beacon_map(input);
+        b.iter(|| part_2(0..=20, &sensors, &beacons));
     }
 
     #[test]
