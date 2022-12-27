@@ -25,39 +25,49 @@ impl SensorCoverage {
     }
 }
 
-pub fn main(contents: String) {
+fn build_sensor_beacon_map(input: String) -> (Vec<SensorCoverage>, HashSet<Point>) {
     let mut sensors: Vec<SensorCoverage> = Vec::new();
     let mut beacons: HashSet<Point> = HashSet::new();
-    for line in contents.lines() {
+    for line in input.lines() {
         let (sensor, beacon) = parse_input(line);
         let size = manhattan_distance(&sensor, &beacon);
         let sensor_cov = SensorCoverage { p: sensor, size };
         sensors.push(sensor_cov);
         beacons.insert(beacon);
     }
-    let rows_to_search = 2_000_000;
-    // let rows_to_search = 10;
-    let part_1 = num_row_non_beacon(rows_to_search, &sensors, &beacons, None);
-    // let part_1 = num_row_non_beacon(10, &sensors, &beacons, None);
-    println!("Part 1: {part_1}");
-    for row in 0..=4_000_000 {
-        let nrnb = num_row_non_beacon(row, &sensors, &beacons, Some(0..=4_000_000));
-        // let span = range_total_span
-        if nrnb == 4_000_000 {
-            let mut row_covered_ranges = get_row_coverage_ranges(row, &sensors);
-            row_covered_ranges = truncate_ranges(row_covered_ranges, 0, 4_000_000);
-            row_covered_ranges = merge_ranges(row_covered_ranges);
-            println!(
-                "Part 2: {}",
-                tuning_frequency(row, row_covered_ranges, 4_000_000)
-            );
-            break;
-        }
-    }
+    (sensors, beacons)
 }
 
-fn tuning_frequency(row: i32, covered_ranges: Vec<RangeInclusive<i32>>, multiplier: i32) -> i64 {
-    row as i64 + multiplier as i64 * (*covered_ranges[0].end() as i64 + 1)
+fn part_1(search_row: i32, sensors: &Vec<SensorCoverage>, beacons: &HashSet<Point>) -> i32 {
+    num_row_non_beacon(search_row, &sensors, &beacons, None)
+}
+
+fn part_2(
+    limits: RangeInclusive<i32>,
+    sensors: &Vec<SensorCoverage>,
+    beacons: &HashSet<Point>,
+) -> i64 {
+    let limit_cpy = limits.clone();
+    for row in limits {
+        let nrnb = num_row_non_beacon(row, &sensors, &beacons, Some(limit_cpy.clone()));
+        if nrnb == *limit_cpy.end() {
+            let mut row_covered_ranges = get_row_coverage_ranges(row, &sensors);
+            row_covered_ranges = truncate_ranges(row_covered_ranges, 0, *limit_cpy.end());
+            row_covered_ranges = merge_ranges(row_covered_ranges);
+            return tuning_frequency(row, row_covered_ranges);
+        }
+    }
+    unreachable!("Solution should exist");
+}
+
+pub fn main(contents: String) {
+    let (sensors, beacons) = build_sensor_beacon_map(contents);
+    println!("Part 1: {}", part_1(2_000_000, &sensors, &beacons));
+    println!("Part 2: {}", part_2(0..=4_000_000, &sensors, &beacons));
+}
+
+fn tuning_frequency(row: i32, covered_ranges: Vec<RangeInclusive<i32>>) -> i64 {
+    row as i64 + 4_000_000 * (*covered_ranges[0].end() as i64 + 1)
 }
 
 fn get_row_coverage_ranges(row: i32, sensors: &Vec<SensorCoverage>) -> Vec<RangeInclusive<i32>> {
@@ -177,6 +187,20 @@ fn truncate_ranges(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn test_part_1() {
+        let input = include_str!("../inputs/2022.15.test").to_string();
+
+        let (sensors, beacons) = build_sensor_beacon_map(input);
+        assert_eq!(part_1(10, &sensors, &beacons), 26);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let input = include_str!("../inputs/2022.15.test").to_string();
+        let (sensors, beacons) = build_sensor_beacon_map(input);
+        assert_eq!(part_2(0..=20, &sensors, &beacons), 56000011);
+    }
 
     #[test]
     fn test_truncate_ranges() {
