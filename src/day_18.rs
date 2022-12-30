@@ -12,7 +12,7 @@ pub fn main(contents: String) {
             .into_iter()
             .map(|v| v.count_sides())
             .sum::<u32>();
-    println!("Part 2: {:?}", part_2);
+    println!("Part 2: {part_2}");
 }
 
 #[derive(Debug)]
@@ -100,17 +100,13 @@ impl Object3D {
         )
     }
     fn extreme(&self, coord: impl Fn(&Point3D) -> i32, cmp_fn: impl Fn(i32, i32) -> i32) -> i32 {
-        self.points
-            .iter()
-            .map(coord)
-            .reduce(|item, accum| cmp_fn(item, accum))
-            .unwrap()
+        self.points.iter().map(coord).reduce(cmp_fn).unwrap()
     }
 
     fn count_sides(&self) -> u32 {
         self.points
             .iter()
-            .map(|p| 6 - count_adjacent(p, &self))
+            .map(|p| 6 - count_adjacent(p, self))
             .sum()
     }
 }

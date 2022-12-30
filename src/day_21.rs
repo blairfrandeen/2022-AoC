@@ -26,16 +26,16 @@ pub fn main(contents: String) {
 
 fn parse_unknown(input: &str, monkeys: &HashMap<String, i64>) -> Option<(String, i64)> {
     let words: Vec<&str> = input.split_whitespace().collect();
-    let key = words[0].replace(":", "");
+    let key = words[0].replace(':', "");
 
-    let v1 = monkeys.get(words[1]);
-    let v2 = monkeys.get(words[3]);
-    if v1.is_some() && v2.is_some() {
+    if monkeys.contains_key(words[1]) && monkeys.contains_key(words[3]) {
+        let v1 = monkeys.get(words[1]).unwrap();
+        let v2 = monkeys.get(words[3]).unwrap();
         match words[2] {
-            "+" => Some((key, v1.unwrap() + v2.unwrap())),
-            "-" => Some((key, v1.unwrap() - v2.unwrap())),
-            "*" => Some((key, v1.unwrap() * v2.unwrap())),
-            "/" => Some((key, v1.unwrap() / v2.unwrap())),
+            "+" => Some((key, v1 + v2)),
+            "-" => Some((key, v1 - v2)),
+            "*" => Some((key, v1 * v2)),
+            "/" => Some((key, v1 / v2)),
             _ => panic!("Bad Operator"),
         }
     } else {
@@ -48,7 +48,7 @@ fn parse_input(input: &str) -> Option<(String, i64)> {
     match words.len() {
         2 => {
             let val = words[1].parse::<i64>().expect("Valid number input");
-            let key = words[0].replace(":", "");
+            let key = words[0].replace(':', "");
             Some((key, val))
         }
         _ => None,
