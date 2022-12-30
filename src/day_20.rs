@@ -2,27 +2,45 @@
 // my file has 5000 lines, 3638 unique numbers
 use std::collections::VecDeque;
 
-type Signal = VecDeque<(usize, i32)>;
+type Signal = VecDeque<(usize, i64)>;
+const DECRYPTION_KEY: i64 = 811_589_153;
 
 pub fn main(contents: String) {
-    let mut input = parse_input(contents);
-    for index in 0..input.len() {
-        let index_to_mix = &input
+    let input = parse_input(contents);
+    println!("Part 1: {}", part_1(input.clone()));
+    println!("Part 2: {}", part_2(input));
+}
+
+fn part_2(mut signal: Signal) -> i64 {
+    signal = signal.iter().map(|e| (e.0, e.1 * DECRYPTION_KEY)).collect();
+    for _ in 0..10 {
+        mix_signal(&mut signal);
+    }
+    after_zero(&signal, 1000) + after_zero(&signal, 2000) + after_zero(&signal, 3000)
+}
+
+fn part_1(mut signal: Signal) -> i64 {
+    // println!("{:?}", _sig_to_vec(&signal));
+    mix_signal(&mut signal);
+    after_zero(&signal, 1000) + after_zero(&signal, 2000) + after_zero(&signal, 3000)
+}
+
+fn mix_signal(signal: &mut Signal) {
+    for index in 0..signal.len() {
+        let index_to_mix = &signal
             .iter()
             .position(|p| p.0 == index)
             .expect("Valid signal");
         // print!("Mixing: {index_to_mix} - ");
-        mix_element(&mut input, *index_to_mix);
+        mix_element(signal, *index_to_mix);
     }
-    // println!("{:?}", sig_to_vec(&input));
-    let part_1 = after_zero(&input, 1000) + after_zero(&input, 2000) + after_zero(&input, 3000);
-    println!("Part 1: {part_1}");
 }
+
 fn mix_element(signal: &mut Signal, index: usize) {
     // Perform mix operation in a given index in a signal
     let delta = signal[index].1;
     let next_index = circular_index(index, delta, signal.len() - 1);
-    // println!("{:?}", sig_to_vec(&signal));
+    // println!("{:?}", _sig_to_vec(&signal));
     // println!("Moving from {index} to {next_index}");
     if next_index >= index {
         signal.as_mut_slices().0[index..=next_index].rotate_left(1);
@@ -33,11 +51,11 @@ fn mix_element(signal: &mut Signal, index: usize) {
 
 fn circular_index(
     start: usize, //starting index of element
-    delta: i32,   // amount to shift forward ro back
+    delta: i64,   // amount to shift forward ro back
     len: usize,   // length of signal
 ) -> usize // return new index of element shifted by delta
 {
-    let new_index = (start as i32 + delta).rem_euclid(len as i32) as usize;
+    let new_index = (start as i64 + delta).rem_euclid(len as i64) as usize;
     // new_index
 
     match new_index {
@@ -51,15 +69,15 @@ fn parse_input(contents: String) -> Signal {
     contents
         .lines()
         .enumerate()
-        .map(|(index, element)| (index, element.parse::<i32>().expect("Valid input")))
+        .map(|(index, element)| (index, element.parse::<i64>().expect("Valid input")))
         .collect()
 }
 
-fn after_zero(signal: &Signal, delta: i32) -> i32 {
+fn after_zero(signal: &Signal, delta: i64) -> i64 {
     let zero_index = signal.iter().position(|p| p.1 == 0).expect(" a zero value");
     signal[circular_index(zero_index, delta, signal.len())].1
 }
-fn sig_to_vec(signal: &Signal) -> Vec<i32> {
+fn _sig_to_vec(signal: &Signal) -> Vec<i64> {
     signal.iter().map(|i| i.1).collect()
 }
 
@@ -80,7 +98,7 @@ mod tests {
 
     #[test]
     fn test_mix() {
-        let mix_sequence: Vec<Vec<i32>> = vec![
+        let mix_sequence: Vec<Vec<i64>> = vec![
             vec![1, 2, -3, 3, -2, 0, 4], // start condition
             vec![2, 1, -3, 3, -2, 0, 4],
             vec![1, -3, 2, 3, -2, 0, 4],
@@ -95,7 +113,7 @@ mod tests {
             parse_input(include_str!("../inputs/2022.20.test").to_string());
         for i in 0..7 {
             mix_element(&mut test_input, indices[i]);
-            assert_eq!(sig_to_vec(&test_input), mix_sequence[i + 1]);
+            assert_eq!(_sig_to_vec(&test_input), mix_sequence[i + 1]);
         }
     }
 
