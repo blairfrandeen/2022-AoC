@@ -3,8 +3,20 @@ use nom::{
     multi::separated_list1, sequence::tuple, IResult,
 };
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 type ValveNetwork = HashMap<String, Valve>;
+
+#[derive(Debug, Clone)]
+struct NetworkState {
+    time_remaining: u32,
+    current_location: String, // current valve we are on
+    open_valves: HashSet<String>,
+    //TODO: Think about whether open_valves should point to a hashset
+    // of strings, "AA, AB, CD, etc." or point to Valve structs?
+    // The latter feels redundant, the former may make it easier
+    // for NetworkState to be hashed and compared to other network states
+}
 
 #[derive(Debug, Clone)]
 struct Valve {
