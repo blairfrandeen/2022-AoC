@@ -4,11 +4,13 @@ use nom::{
     IResult,
 };
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::{self, BufRead};
 use std::rc::Rc;
 
 type ValveNetwork = HashMap<String, Valve>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Valve {
     name: String,
     flow_rate: u32,
@@ -42,6 +44,7 @@ fn parse_input(input: &str) -> (&str, u32, Vec<&str>) {
     // println!("{} {} {:?}", name, flow_rate, tunnels);
     (name, flow_rate, tunnels)
 }
+
 pub fn main(contents: String) {
     println!("Hello AoC!");
     let mut network: ValveNetwork = ValveNetwork::new();
@@ -52,6 +55,7 @@ pub fn main(contents: String) {
     let current_position = "AA"; // starting position
     println!("{:?}", network.get("AA"));
     println!("{:?}", get_next_moves("AA".to_string(), &network, 30));
+    println!("max pressure attainable: {:?}", max_pressure(current_position.to_owned(), network, 5, 0, "".to_string()));
 }
 
 #[derive(Debug)]
@@ -60,22 +64,40 @@ enum Move {
     NextCave(String),
 }
 
-fn max_pressure(current_position: String, network: &ValveNetwork, current_time: u32, current_pressure: u32) -> u32 {
+fn max_pressure(current_position: String, network: ValveNetwork, current_time: u32, current_pressure: u32, path: String) -> u32 {
+   let path = format!("{}#{}-t:{}#", path, current_position, current_time);
+    println!("Path: {}", path);
+    println!("Current time: {}, current pressure: {}, current position: {}", current_time, current_pressure, current_position);
     if let Some(next_moves) = get_next_moves(current_position.clone(), &network, current_time) {
         let mut results: Vec<u32> =  Vec::new();
+        println!("possible next moves: {:?}", next_moves);
         for move_ in next_moves.iter() {
+
             let p = match move_ {
-                Move::OpenValve => max_pressure(
-                    current_position.clone(),
-                    &network,
-                    current_time - 1,
-                    (current_time - 1) * network.get(&current_position).unwrap().flow_rate
-                ),
-                Move::NextCave(cave) => max_pressure(cave.to_string(), &network, current_time - 1, current_pressure)
+                Move::OpenValve => {
+                    let mut new_network = network.clone();
+                    new_network.get_mut(&current_position).unwrap().is_open = true;
+                    let next_time = current_time - 1;
+                    let flow_time = if next_time > 0 {
+                        next_time - 1
+                    } else {
+                        0
+                    };
+                    max_pressure(
+                        current_position.clone(),
+                        new_network,
+                        next_time,
+                        (flow_time * network.get(&current_position).unwrap().flow_rate) + current_pressure,
+                        path.clone()
+                    )
+                }
+                Move::NextCave(cave) => max_pressure(cave.to_string(), network.clone(), current_time - 1, current_pressure, path.clone())
             };
             results.push(p);
         }
-        0 // need to return max of result vec
+        results.sort();
+        println!("pressures found: {:?}", results);
+        *results.last().unwrap()
     } else {
         current_pressure
     }
@@ -114,5 +136,26 @@ mod tests {
     fn test_parse_input() {
         let inp = "Valve AA has flow rate=10; tunnels lead to valves DD, II, BB";
         assert_eq!(parse_input(inp), ("AA", 10, vec!["DD", "II", "BB"]))
+    }
+
+
+     #[test]
+    fn test_small_network_max() {
+        let mut network: ValveNetwork = ValveNetwork::new();
+        let a = Valve::build("Valve AA has flow rate=0; tunnels lead to valves BB, CC");
+        let b = Valve::build("Valve BB has flow rate=2; tunnels lead to valves AA");
+        let c = Valve::build("Valve CC has flow rate=15; tunnels lead to valves AA");
+        network.insert("AA".to_string(), a);
+        network.insert("BB".to_string(), b);
+        network.insert("CC".to_string(), c);
+
+
+        println!("{:?}", network);
+
+        assert_eq!( (15 * 4 ) + ( 2 * 1) , max_pressure("AA".to_string(), network, 6, 0, "".to_string()));
+
+
+
+        // assert_eq!(v.tunnels,vec![]);
     }
 }
