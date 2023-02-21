@@ -10,19 +10,15 @@ type ValveNetwork = HashMap<String, Valve>;
 #[derive(Debug, Clone)]
 struct NetworkState {
     time_remaining: u32,
-    current_location: String, // current valve we are on
-    open_valves: HashSet<String>,
-    //TODO: Think about whether open_valves should point to a hashset
-    // of strings, "AA, AB, CD, etc." or point to Valve structs?
-    // The latter feels redundant, the former may make it easier
-    // for NetworkState to be hashed and compared to other network states
+    current_position: String,          // current valve we are on
+    open_valves: HashMap<String, u32>, // at what time was what valve opened?
 }
 
 #[derive(Debug, Clone)]
 struct Valve {
     name: String,
     flow_rate: u32,
-    is_open: bool,
+    // is_open: bool,
     tunnels: Vec<String>,
 }
 
@@ -31,7 +27,7 @@ impl Valve {
         let (name, flow_rate, tunnels) = parse_input(input);
         Valve {
             name: name.to_string(),
-            is_open: false,
+            // is_open: false,
             flow_rate,
             tunnels: tunnels.into_iter().map(|t| t.to_string()).collect(),
         }
@@ -65,12 +61,75 @@ pub fn main(contents: String) {
         network.insert(new_valve.name.clone(), new_valve);
     }
     let current_position = "AA"; // starting position
-    println!("{:?}", network.get("AA"));
-    println!("{:?}", get_next_moves("AA".to_string(), &network, 30));
+                                 // println!("{:?}", network.get("AA"));
+                                 // println!("{:?}", get_next_moves("AA".to_string(), &network, 30));
+    let time_remaining = 20;
+    let initial_state = NetworkState {
+        time_remaining,
+        current_position: current_position.to_string(),
+        open_valves: HashMap::new(),
+    };
     println!(
         "max pressure attainable: {:?}",
-        max_pressure(current_position.to_owned(), network, 5, 0, "".to_string())
+        max_pressure(initial_state, &network, 0)
     );
+}
+
+fn max_pressure(
+    network_state: NetworkState,
+    network: &ValveNetwork,
+    current_pressure: u32,
+    // path: String,
+) -> u32 {
+    if network_state.time_remaining == 0 {
+        println!(
+            "Time Remaining: {}, current pressure: {}, current position: {} Open valves: {:?}",
+            &network_state.time_remaining,
+            &current_pressure,
+            &network_state.current_position,
+            &network_state.open_valves,
+        );
+    }
+    if let Some(next_moves) = get_next_moves(&network_state, &network) {
+        let mut results: Vec<u32> = Vec::new();
+        // println!("possible next moves: {:?}", next_moves);
+        for move_ in next_moves.iter() {
+            let mut new_state = network_state.clone();
+            let next_time = network_state.time_remaining - 1;
+            new_state.time_remaining = next_time;
+            let p = match move_ {
+                Move::OpenValve => {
+                    // let mut new_network = network.clone();
+                    // new_network.get_mut(&current_position).unwrap().is_open = true;
+                    new_state
+                        .open_valves
+                        .insert(new_state.current_position.clone(), next_time);
+                    // let next_time = network_state.time_remaining - 1;
+                    // let flow_time = next_time;
+                    max_pressure(
+                        new_state.clone(),
+                        &network,
+                        (next_time
+                            * network
+                                .get(&network_state.current_position)
+                                .unwrap()
+                                .flow_rate)
+                            + current_pressure,
+                    )
+                }
+                Move::NextCave(cave) => {
+                    new_state.current_position = cave.to_string();
+                    max_pressure(new_state, &network, current_pressure)
+                }
+            };
+            results.push(p);
+        }
+        results.sort();
+        // println!("pressures found: {:?}", results);
+        *results.last().unwrap()
+    } else {
+        current_pressure
+    }
 }
 
 #[derive(Debug)]
@@ -79,67 +138,19 @@ enum Move {
     NextCave(String),
 }
 
-fn max_pressure(
-    current_position: String,
-    network: ValveNetwork,
-    current_time: u32,
-    current_pressure: u32,
-    path: String,
-) -> u32 {
-    let path = format!("{}#{}-t:{}#", path, current_position, current_time);
-    println!("Path: {}", path);
-    println!(
-        "Current time: {}, current pressure: {}, current position: {}",
-        current_time, current_pressure, current_position
-    );
-    if let Some(next_moves) = get_next_moves(current_position.clone(), &network, current_time) {
-        let mut results: Vec<u32> = Vec::new();
-        println!("possible next moves: {:?}", next_moves);
-        for move_ in next_moves.iter() {
-            let p = match move_ {
-                Move::OpenValve => {
-                    let mut new_network = network.clone();
-                    new_network.get_mut(&current_position).unwrap().is_open = true;
-                    let next_time = current_time - 1;
-                    let flow_time = if next_time > 0 { next_time - 1 } else { 0 };
-                    max_pressure(
-                        current_position.clone(),
-                        new_network,
-                        next_time,
-                        (flow_time * network.get(&current_position).unwrap().flow_rate)
-                            + current_pressure,
-                        path.clone(),
-                    )
-                }
-                Move::NextCave(cave) => max_pressure(
-                    cave.to_string(),
-                    network.clone(),
-                    current_time - 1,
-                    current_pressure,
-                    path.clone(),
-                ),
-            };
-            results.push(p);
-        }
-        results.sort();
-        println!("pressures found: {:?}", results);
-        *results.last().unwrap()
-    } else {
-        current_pressure
-    }
-}
-
 fn get_next_moves(
-    current_position: String,
+    network_state: &NetworkState,
+    // current_position: String,
     network: &ValveNetwork,
-    current_time: u32,
+    // current_time: u32,
 ) -> Option<Vec<Move>> {
-    if current_time == 0 {
+    if network_state.time_remaining == 0 {
         None
     } else {
-        let current_cave = network.get(&current_position).unwrap();
+        let current_cave = network.get(&network_state.current_position).unwrap();
         let mut moves: Vec<Move> = Vec::new();
-        if current_cave.flow_rate > 0 && !current_cave.is_open {
+        if current_cave.flow_rate > 0 && !network_state.open_valves.contains_key(&current_cave.name)
+        {
             moves.push(Move::OpenValve)
         }
         for cave in current_cave.tunnels.iter() {
@@ -180,9 +191,14 @@ mod tests {
 
         println!("{:?}", network);
 
+        let initial_state = NetworkState {
+            time_remaining: 6,
+            current_position: "AA".to_string(),
+            open_valves: HashMap::new(),
+        };
         assert_eq!(
             (15 * 4) + (2 * 1),
-            max_pressure("AA".to_string(), network, 6, 0, "".to_string())
+            max_pressure(initial_state, &network, 0,)
         );
 
         // assert_eq!(v.tunnels,vec![]);
