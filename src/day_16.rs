@@ -4,6 +4,7 @@ use nom::{
 };
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::thread::current;
 
 type ValveNetwork = HashMap<String, Valve>;
 
@@ -23,6 +24,30 @@ impl NetworkState {
             }
         }
         pressure
+    }
+
+    fn remaining_potential(&self, network: &ValveNetwork) -> u32 {
+        let mut potential = 0;
+        if self.time_remaining <= 1 {
+            // println!("{}", &potential);
+            return potential;
+        }
+        let mut time_counter = self.time_remaining - 1;
+        let mut valve_list: Vec<Valve> = network.clone().into_values().collect(); //.sort().reverse();
+        valve_list.sort_by(|a, b| a.flow_rate.cmp(&b.flow_rate));
+        valve_list.reverse();
+        for valve in valve_list {
+            if time_counter <= 1 {
+                // println!("{}", &potential);
+                return potential;
+            }
+            if !self.open_valves.contains(&Some(valve.name.clone())) {
+                potential += valve.flow_rate * time_counter;
+                time_counter -= 2;
+            }
+        }
+        // println!("{}", &potential);
+        potential
     }
 }
 
@@ -77,6 +102,10 @@ pub fn main(contents: String) {
         current_position: current_position.to_string(),
         open_valves: vec![None; time_remaining as usize],
     };
+    println!(
+        "Max pressure release: {}",
+        initial_state.remaining_potential(&network)
+    );
     let mut visited = HashSet::<NetworkState>::new();
     println!(
         "max pressure attainable: {:?}",
@@ -105,51 +134,46 @@ fn find_max_pressure(
     if !visited.insert(network_state.clone()) {
         return max_pressure;
     }
-
     let current_pressure = network_state.pressure(network);
-    if current_pressure < max_pressure {
+    // let rem = network_state.remaining_potential(&network);
+    // println!("{} {} {}", max_pressure, current_pressure, rem);
+    if network_state.remaining_potential(&network) == 0 {
+        //+ current_pressure < max_pressure {
+        // println!("blair's check worked! :)");
         return max_pressure;
     }
-    /*
-    let new_max_pressure = if current_pressure > max_pressure {
-        current_pressure
-    } else {
-        max_pressure
+    let mut new_max_pressure = match current_pressure > max_pressure {
+        true => current_pressure,
+        false => max_pressure,
     };
-    */
 
-    /*println!(
+    // if current_pressure < max_pressure {
+    //     return max_pressure;
+    // }
+    /*
+
+    println!(
         "Time Remaining: {}, current pressure: {}, current position: {} Open valves: {:?}",
         &network_state.time_remaining,
         &max_pressure,
         &network_state.current_position,
         &network_state.open_valves,
-    );*/
+    );
+    */
     if let Some(next_moves) = get_next_moves(&network_state, &network) {
-        let mut results: Vec<u32> = Vec::new();
+        // let mut results: Vec<u32> = Vec::new();
         for move_ in next_moves.iter() {
-            // let mut new_state = network_state.clone();
-            // let next_time = network_state.time_remaining - 1;
-            // new_state.time_remaining = next_time;
             let new_state = execute_move(&network_state, move_);
-            let p = find_max_pressure(new_state, &network, visited, current_pressure);
-            // let p = match move_ {
-            // Move::OpenValve => {
-            // new_state.open_valves[next_time as usize] =
-            // Some(new_state.current_position.clone());
-
-            // find_max_pressure(new_state.clone(), &network, visited, new_max_pressure)
-            // }
-            // Move::NextCave(cave) => {
-            // new_state.current_position = cave.to_string();
-            // find_max_pressure(new_state, &network, visited, new_max_pressure)
-            // }
-            // };
-            results.push(p);
+            return find_max_pressure(new_state, &network, visited, new_max_pressure);
+            //     if p > new_max_pressure {
+            //         new_max_pressure = p;
+            //         // results.push(p);
+            //     }
         }
-        results.sort();
-        println!("pressures found: {:?}", results);
-        *results.last().unwrap()
+        new_max_pressure
+        // results.sort();
+        // println!("pressures found: {:?}", results);
+        // *results.last().unwrap()
     } else {
         current_pressure
     }
